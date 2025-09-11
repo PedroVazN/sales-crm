@@ -30,6 +30,7 @@ app.get('/api', (req, res) => {
 app.use('/api/users', require('./routes/users'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/sales', require('./routes/sales'));
+app.use('/api/proposals', require('./routes/proposals'));
 
 // Middleware de tratamento de erros
 app.use((err, req, res, next) => {
