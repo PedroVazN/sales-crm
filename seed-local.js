@@ -4,14 +4,13 @@ const Product = require('./models/Product');
 const Distributor = require('./models/DistributorNew');
 const Client = require('./models/Client');
 const PriceList = require('./models/PriceList');
-require('dotenv').config();
 
-// Conectar ao MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/sellone');
+// Conectar ao MongoDB Atlas
+mongoose.connect('mongodb+srv://sellone-user:Va481Na+@sellone.npuas1m.mongodb.net/sellone?retryWrites=true&w=majority&appName=sellOne');
 
 async function seedData() {
   try {
-    console.log('🌱 Iniciando seed de dados...');
+    console.log('🌱 Iniciando seed de dados no MongoDB Atlas...');
 
     // Criar usuário admin se não existir
     const existingUser = await User.findOne({ email: 'admin@sellone.com' });
