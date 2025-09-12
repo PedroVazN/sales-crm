@@ -1,77 +1,43 @@
 import styled from 'styled-components';
 
 export const Container = styled.div`
-  padding: 32px;
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  padding: ${({ theme }) => theme.spacing.xl};
+  background: ${({ theme }) => theme.colors.background.primary};
   min-height: 100vh;
-  position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.05) 0%, transparent 50%);
-    pointer-events: none;
-  }
 `;
 
 export const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  position: relative;
-  z-index: 1;
+  margin-bottom: ${({ theme }) => theme.spacing.xxl};
 `;
 
 export const Title = styled.h1`
-  font-size: 2.5rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #00d4aa 0%, #6366f1 50%, #ec4899 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 2rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
-  text-shadow: 0 0 30px rgba(0, 212, 170, 0.3);
 `;
 
 export const Actions = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: ${({ theme }) => theme.spacing.md};
 `;
 
 export const SearchContainer = styled.div`
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 12px 20px;
+  background: ${({ theme }) => theme.colors.background.card};
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   min-width: 300px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  
-  &:focus-within {
-    border-color: #00d4aa;
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
-  }
   
   svg {
-    color: rgba(255, 255, 255, 0.4);
-    margin-right: 12px;
-    transition: color 0.2s ease;
-  }
-  
-  &:focus-within svg {
-    color: #00d4aa;
+    color: ${({ theme }) => theme.colors.text.tertiary};
+    margin-right: ${({ theme }) => theme.spacing.sm};
   }
 `;
 
@@ -79,278 +45,141 @@ export const SearchInput = styled.input`
   background: transparent;
   border: none;
   outline: none;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.95rem;
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: 0.875rem;
   flex: 1;
-  font-weight: 500;
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.4);
-    font-weight: 400;
+    color: ${({ theme }) => theme.colors.text.tertiary};
   }
 `;
 
 export const FilterButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 12px 20px;
-  color: rgba(255, 255, 255, 0.7);
+  gap: ${({ theme }) => theme.spacing.sm};
+  background: ${({ theme }) => theme.colors.background.card};
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.colors.text.secondary};
   cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-  font-weight: 500;
+  transition: all 0.2s ease;
   
   &:hover {
-    color: #00d4aa;
-    border-color: #00d4aa;
-    background: rgba(0, 212, 170, 0.1);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 212, 170, 0.2);
+    color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
 export const CreateButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #00d4aa 0%, #6366f1 100%);
+  gap: ${({ theme }) => theme.spacing.sm};
+  background: ${({ theme }) => theme.colors.primary};
   border: none;
-  border-radius: 12px;
-  padding: 12px 20px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.colors.text.inverse};
   font-weight: 600;
-  position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-  }
+  cursor: pointer;
+  transition: all 0.2s ease;
   
   &:hover {
+    background: ${({ theme }) => theme.colors.success};
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 212, 170, 0.3);
-    
-    &::before {
-      left: 100%;
-    }
+    box-shadow: ${({ theme }) => theme.shadows.glow};
   }
 `;
 
 export const Content = styled.div`
-  position: relative;
-  z-index: 1;
-`;
-
-export const ProductsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 24px;
-`;
-
-export const ProductCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 24px;
-  backdrop-filter: blur(20px);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(0, 212, 170, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  
-  &:hover {
-    border-color: #00d4aa;
-    box-shadow: 
-      0 20px 40px rgba(0, 0, 0, 0.3),
-      0 0 0 1px rgba(0, 212, 170, 0.2);
-    transform: translateY(-5px);
-    
-    &::before {
-      opacity: 1;
-    }
-  }
-`;
-
-export const ProductImage = styled.div`
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #00d4aa, #6366f1);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-  color: white;
-  position: relative;
-  z-index: 1;
-`;
-
-export const ProductInfo = styled.div`
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 1;
-`;
-
-export const ProductName = styled.h3`
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 8px 0;
-`;
-
-export const ProductCategory = styled.p`
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 12px 0;
-  font-weight: 500;
-`;
-
-export const ProductPrice = styled.div`
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: #00d4aa;
-  margin-bottom: 8px;
-`;
-
-export const ProductStock = styled.div<{ $color: string }>`
-  font-size: 0.85rem;
-  color: ${({ $color }) => $color};
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  
-  &::before {
-    content: '';
-    width: 8px;
-    height: 8px;
-    background: ${({ $color }) => $color};
-    border-radius: 50%;
-  }
-`;
-
-export const ProductStats = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 1;
-`;
-
-export const StatItem = styled.div`
+  background: ${({ theme }) => theme.colors.background.card};
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: ${({ theme }) => theme.spacing.xxl};
+  backdrop-filter: blur(10px);
   text-align: center;
-`;
-
-export const StatValue = styled.div`
-  font-size: 1rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 4px;
-`;
-
-export const StatLabel = styled.div`
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: 500;
-`;
-
-export const ProductActions = styled.div`
-  display: flex;
-  gap: 8px;
-  position: relative;
-  z-index: 1;
-`;
-
-export const ActionButton = styled.button<{ $variant: 'view' | 'edit' | 'delete' }>`
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  ${({ $variant }) => {
-    switch ($variant) {
-      case 'view':
-        return `
-          background: rgba(59, 130, 246, 0.1);
-          color: #60a5fa;
-          border: 1px solid rgba(59, 130, 246, 0.2);
-          
-          &:hover {
-            background: rgba(59, 130, 246, 0.2);
-            color: #93c5fd;
-            transform: translateY(-2px);
-          }
-        `;
-      case 'edit':
-        return `
-          background: rgba(16, 185, 129, 0.1);
-          color: #34d399;
-          border: 1px solid rgba(16, 185, 129, 0.2);
-          
-          &:hover {
-            background: rgba(16, 185, 129, 0.2);
-            color: #6ee7b7;
-            transform: translateY(-2px);
-          }
-        `;
-      case 'delete':
-        return `
-          background: rgba(239, 68, 68, 0.1);
-          color: #f87171;
-          border: 1px solid rgba(239, 68, 68, 0.2);
-          
-          &:hover {
-            background: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-            transform: translateY(-2px);
-          }
-        `;
-    }
-  }}
-`;
-
-export const LoadingContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  gap: 24px;
   
   p {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 1rem;
-    font-weight: 500;
+    color: ${({ theme }) => theme.colors.text.secondary};
+    font-size: 1.125rem;
   }
+`;
+
+export const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  background: ${({ theme }) => theme.colors.background.card};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  overflow: hidden;
+  box-shadow: ${({ theme }) => theme.shadows.medium};
+`;
+
+export const TableHeader = styled.thead`
+  background: ${({ theme }) => theme.colors.background.secondary};
+`;
+
+export const TableRow = styled.tr`
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.primary};
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.secondary};
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+export const TableCell = styled.td`
+  padding: ${({ theme }) => theme.spacing.md};
+  text-align: left;
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: 0.875rem;
+  
+  &:first-child {
+    font-weight: 600;
+  }
+`;
+
+export const TableBody = styled.tbody``;
+
+export const ActionButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  cursor: pointer;
+  padding: ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  transition: all 0.2s ease;
+  margin-right: ${({ theme }) => theme.spacing.sm};
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.secondary};
+    color: ${({ theme }) => theme.colors.primary};
+  }
+  
+  &:last-child:hover {
+    color: ${({ theme }) => theme.colors.error};
+  }
+`;
+
+export const StatusBadge = styled.span<{ $isActive: boolean }>`
+  display: inline-block;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.full};
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  
+  ${({ $isActive, theme }) => $isActive ? `
+    background: ${theme.colors.success}20;
+    color: ${theme.colors.success};
+  ` : `
+    background: ${theme.colors.error}20;
+    color: ${theme.colors.error};
+  `}
 `;
 
 export const EmptyState = styled.div`
@@ -358,35 +187,80 @@ export const EmptyState = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
-  gap: 24px;
+  padding: ${({ theme }) => theme.spacing.xxl};
   text-align: center;
+  
+  svg {
+    color: ${({ theme }) => theme.colors.text.tertiary};
+    margin-bottom: ${({ theme }) => theme.spacing.lg};
+  }
+  
+  h3 {
+    color: ${({ theme }) => theme.colors.text.primary};
+    margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
+    font-size: 1.5rem;
+  }
+  
+  p {
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin: 0 0 ${({ theme }) => theme.spacing.lg} 0;
+    font-size: 1rem;
+  }
 `;
 
-export const EmptyIcon = styled.div`
-  width: 120px;
-  height: 120px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
+export const LoadingState = styled.div`
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(10px);
+  padding: ${({ theme }) => theme.spacing.xxl};
+  text-align: center;
+  
+  svg {
+    color: ${({ theme }) => theme.colors.primary};
+    margin-bottom: ${({ theme }) => theme.spacing.lg};
+    animation: spin 1s linear infinite;
+  }
+  
+  p {
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin: 0;
+    font-size: 1rem;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
 `;
 
-export const EmptyTitle = styled.h3`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-`;
-
-export const EmptyDescription = styled.p`
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0;
-  max-width: 400px;
-  line-height: 1.5;
+export const ErrorState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.spacing.xxl};
+  text-align: center;
+  
+  p {
+    color: ${({ theme }) => theme.colors.error};
+    margin: 0 0 ${({ theme }) => theme.spacing.lg} 0;
+    font-size: 1rem;
+  }
+  
+  button {
+    background: ${({ theme }) => theme.colors.primary};
+    border: none;
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+    color: ${({ theme }) => theme.colors.text.inverse};
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: ${({ theme }) => theme.colors.success};
+      transform: translateY(-2px);
+    }
+  }
 `;

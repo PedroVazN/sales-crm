@@ -3,6 +3,17 @@ const User = require('../models/User');
 
 const auth = async (req, res, next) => {
   try {
+    // Modo desenvolvimento - criar usuário temporário
+    if (process.env.NODE_ENV === 'development') {
+      req.user = {
+        id: 'dev-user-id',
+        name: 'Usuário Desenvolvimento',
+        email: 'dev@example.com',
+        role: 'admin'
+      };
+      return next();
+    }
+
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (!token) {

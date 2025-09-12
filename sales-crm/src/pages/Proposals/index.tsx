@@ -234,8 +234,8 @@ export const PriceList: React.FC = () => {
                 <PriceListDistributor>
                   <Building2 size={20} />
                   <div>
-                    <h4>{item.distributor.apelido}</h4>
-                    <span>{item.distributor.contato.email}</span>
+                    <h4>{item.distributor?.apelido || 'N/A'}</h4>
+                    <span>{item.distributor?.contato?.email || 'N/A'}</span>
                   </div>
                 </PriceListDistributor>
                 <PriceListStatus $isActive={item.isActive}>
@@ -246,23 +246,23 @@ export const PriceList: React.FC = () => {
               <PriceListProduct>
                 <Package size={20} />
                 <div>
-                  <h4>{item.product.name}</h4>
-                  <span>{item.product.description}</span>
+                  <h4>{item.product?.name || 'N/A'}</h4>
+                  <span>{item.product?.description || 'N/A'}</span>
                 </div>
               </PriceListProduct>
 
               <PriceListPricing>
                 <PricingItem>
                   <span>A Vista</span>
-                  <strong>{formatCurrency(item.pricing.aVista)}</strong>
+                  <strong>{formatCurrency(item.pricing?.aVista || 0)}</strong>
                 </PricingItem>
                 <PricingItem>
                   <span>3x Boleto</span>
-                  <strong>{formatCurrency(item.pricing.tresXBoleto)}</strong>
+                  <strong>{formatCurrency(item.pricing?.tresXBoleto || 0)}</strong>
                 </PricingItem>
                 <PricingItem>
                   <span>3x Cartão</span>
-                  <strong>{formatCurrency(item.pricing.tresXCartao)}</strong>
+                  <strong>{formatCurrency(item.pricing?.tresXCartao || 0)}</strong>
                 </PricingItem>
               </PriceListPricing>
 

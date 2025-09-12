@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiService, PriceListItem, Distributor, Product } from '../../services/api';
-import { X, Loader2 } from 'lucide-react';
+import { X, Trash2, Loader2 } from 'lucide-react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 
@@ -10,7 +10,19 @@ interface PriceListModalProps {
   onSave: (priceItem: PriceListItem) => void;
   distributors: Distributor[];
   products: Product[];
-  priceItem?: PriceListItem;
+  priceItem?: PriceListItem | null;
+}
+
+interface PaymentMethod {
+  type: 'aVista' | 'boleto' | 'cartao';
+  installments: number;
+  price: number;
+}
+
+interface ProductPricing {
+  productId: string;
+  product: Product;
+  paymentMethods: PaymentMethod[];
 }
 
 const ModalOverlay = styled.div`
@@ -34,7 +46,7 @@ const ModalContainer = styled.div`
   border: 1px solid ${theme.colors.border.primary};
   border-radius: ${theme.borderRadius.lg};
   width: 100%;
-  max-width: 600px;
+  max-width: 900px;
   max-height: 90vh;
   overflow: hidden;
   box-shadow: ${theme.shadows.large};
@@ -102,10 +114,6 @@ const ModalBody = styled.div`
   &::-webkit-scrollbar-thumb:hover {
     background: ${theme.colors.primary};
   }
-  
-  /* Firefox scrollbar */
-  scrollbar-width: thin;
-  scrollbar-color: ${theme.colors.border.secondary} ${theme.colors.background.secondary};
 `;
 
 const FormGroup = styled.div`
@@ -153,28 +161,6 @@ const Select = styled.select<{ $hasError?: boolean }>`
     outline: none;
     border-color: ${theme.colors.primary};
     box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
-  }
-`;
-
-const Textarea = styled.textarea`
-  padding: 0.75rem;
-  border: 1px solid ${theme.colors.border.primary};
-  border-radius: ${theme.borderRadius.sm};
-  background: ${theme.colors.background.secondary};
-  color: ${theme.colors.text.primary};
-  font-size: 1rem;
-  transition: all 0.2s ease;
-  resize: vertical;
-  min-height: 80px;
-  
-  &:focus {
-    outline: none;
-    border-color: ${theme.colors.primary};
-    box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
-  }
-  
-  &::placeholder {
-    color: ${theme.colors.text.muted};
   }
 `;
 
@@ -244,11 +230,95 @@ const LoadingSpinner = styled(Loader2)`
 
 const Grid = styled.div<{ columns?: number }>`
   display: grid;
-  grid-template-columns: repeat(${({ columns = 3 }) => columns}, 1fr);
+  grid-template-columns: repeat(${({ columns = 2 }) => columns}, 1fr);
   gap: 1rem;
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+  }
+`;
+
+const ProductCard = styled.div`
+  border: 1px solid ${theme.colors.border.primary};
+  border-radius: ${theme.borderRadius.sm};
+  padding: 1rem;
+  background: ${theme.colors.background.secondary};
+`;
+
+const ProductHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+`;
+
+const ProductInfo = styled.div`
+  flex: 1;
+  
+  h4 {
+    margin: 0 0 0.25rem 0;
+    color: ${theme.colors.text.primary};
+    font-size: 1rem;
+  }
+  
+  p {
+    margin: 0;
+    color: ${theme.colors.text.secondary};
+    font-size: 0.875rem;
+  }
+`;
+
+const RemoveButton = styled.button`
+  background: ${theme.colors.error};
+  color: white;
+  border: none;
+  border-radius: ${theme.borderRadius.sm};
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    background: #dc2626;
+  }
+`;
+
+const PaymentMethodCard = styled.div`
+  border: 1px solid ${theme.colors.border.secondary};
+  border-radius: ${theme.borderRadius.sm};
+  padding: 0.75rem;
+  background: ${theme.colors.background.card};
+  margin-bottom: 0.5rem;
+`;
+
+const PaymentMethodHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+`;
+
+const PaymentMethodType = styled.span`
+  font-weight: 500;
+  color: ${theme.colors.text.primary};
+  text-transform: capitalize;
+`;
+
+const PaymentMethodInputs = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+`;
+
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: ${theme.colors.text.secondary};
+  
+  p {
+    margin: 0.5rem 0 0 0;
   }
 `;
 
@@ -262,30 +332,20 @@ export const PriceListModal: React.FC<PriceListModalProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     distributor: '',
-    product: '',
-    pricing: {
-      aVista: '',
-      tresXBoleto: '',
-      tresXCartao: ''
-    },
     validFrom: '',
     validUntil: '',
     notes: ''
   });
+  const [selectedProducts, setSelectedProducts] = useState<ProductPricing[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       if (priceItem) {
+        // Para edição, vamos simplificar por enquanto
         setFormData({
-          distributor: priceItem.distributor._id,
-          product: priceItem.product._id,
-          pricing: {
-            aVista: priceItem.pricing.aVista.toString(),
-            tresXBoleto: priceItem.pricing.tresXBoleto.toString(),
-            tresXCartao: priceItem.pricing.tresXCartao.toString()
-          },
+          distributor: priceItem.distributor?._id || '',
           validFrom: priceItem.validFrom ? new Date(priceItem.validFrom).toISOString().split('T')[0] : '',
           validUntil: priceItem.validUntil ? new Date(priceItem.validUntil).toISOString().split('T')[0] : '',
           notes: priceItem.notes || ''
@@ -293,16 +353,11 @@ export const PriceListModal: React.FC<PriceListModalProps> = ({
       } else {
         setFormData({
           distributor: '',
-          product: '',
-          pricing: {
-            aVista: '',
-            tresXBoleto: '',
-            tresXCartao: ''
-          },
           validFrom: '',
           validUntil: '',
           notes: ''
         });
+        setSelectedProducts([]);
       }
       setErrors({});
     }
@@ -311,21 +366,10 @@ export const PriceListModal: React.FC<PriceListModalProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    if (name.startsWith('pricing.')) {
-      const field = name.split('.')[1];
-      setFormData(prev => ({
-        ...prev,
-        pricing: {
-          ...prev.pricing,
-          [field]: value
-        }
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
     
     // Limpar erro do campo
     if (errors[name]) {
@@ -336,6 +380,42 @@ export const PriceListModal: React.FC<PriceListModalProps> = ({
     }
   };
 
+  const addProduct = (productId: string) => {
+    const product = products.find(p => p._id === productId);
+    if (!product) return;
+
+    const newProductPricing: ProductPricing = {
+      productId,
+      product,
+      paymentMethods: [
+        { type: 'aVista', installments: 1, price: 0 },
+        { type: 'boleto', installments: 1, price: 0 },
+        { type: 'cartao', installments: 1, price: 0 }
+      ]
+    };
+
+    setSelectedProducts(prev => [...prev, newProductPricing]);
+  };
+
+  const removeProduct = (productId: string) => {
+    setSelectedProducts(prev => prev.filter(p => p.productId !== productId));
+  };
+
+
+  const updatePaymentMethod = (productId: string, index: number, field: keyof PaymentMethod, value: any) => {
+    setSelectedProducts(prev => prev.map(p => 
+      p.productId === productId 
+        ? {
+            ...p,
+            paymentMethods: p.paymentMethods.map((pm, i) => 
+              i === index ? { ...pm, [field]: value } : pm
+            )
+          }
+        : p
+    ));
+  };
+
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -343,30 +423,17 @@ export const PriceListModal: React.FC<PriceListModalProps> = ({
       newErrors.distributor = 'Distribuidor é obrigatório';
     }
 
-    if (!formData.product) {
-      newErrors.product = 'Produto é obrigatório';
+    if (selectedProducts.length === 0) {
+      newErrors.products = 'Pelo menos um produto deve ser selecionado';
     }
 
-    if (!formData.pricing.aVista || parseFloat(formData.pricing.aVista) <= 0) {
-      newErrors.aVista = 'Preço à vista deve ser maior que zero';
-    }
-
-    if (!formData.pricing.tresXBoleto || parseFloat(formData.pricing.tresXBoleto) <= 0) {
-      newErrors.tresXBoleto = 'Preço 3x boleto deve ser maior que zero';
-    }
-
-    if (!formData.pricing.tresXCartao || parseFloat(formData.pricing.tresXCartao) <= 0) {
-      newErrors.tresXCartao = 'Preço 3x cartão deve ser maior que zero';
-    }
-
-    if (formData.validUntil && formData.validFrom) {
-      const validFrom = new Date(formData.validFrom);
-      const validUntil = new Date(formData.validUntil);
-      
-      if (validUntil <= validFrom) {
-        newErrors.validUntil = 'Data de validade deve ser posterior à data de início';
-      }
-    }
+    selectedProducts.forEach((product, productIndex) => {
+      product.paymentMethods.forEach((payment, paymentIndex) => {
+        if (payment.price > 0 && payment.installments < 1) {
+          newErrors[`payment_${productIndex}_${paymentIndex}`] = 'Número de parcelas deve ser pelo menos 1';
+        }
+      });
+    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -381,32 +448,45 @@ export const PriceListModal: React.FC<PriceListModalProps> = ({
 
     setIsLoading(true);
     try {
-      const priceData = {
+      // Criar um item de preço para cada produto
+      const priceItems = selectedProducts.map(product => ({
         distributor: formData.distributor,
-        product: formData.product,
+        product: product.productId,
         pricing: {
-          aVista: parseFloat(formData.pricing.aVista),
-          tresXBoleto: parseFloat(formData.pricing.tresXBoleto),
-          tresXCartao: parseFloat(formData.pricing.tresXCartao)
+          aVista: product.paymentMethods.find(pm => pm.type === 'aVista')?.price || 0,
+          tresXBoleto: product.paymentMethods.find(pm => pm.type === 'boleto')?.price || 0,
+          tresXCartao: product.paymentMethods.find(pm => pm.type === 'cartao')?.price || 0
         },
         isActive: true,
         validFrom: formData.validFrom ? new Date(formData.validFrom).toISOString() : new Date().toISOString(),
         validUntil: formData.validUntil ? new Date(formData.validUntil).toISOString() : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         notes: formData.notes
-      };
+      }));
 
-      console.log('Enviando dados:', priceData);
-      const response = await apiService.createPriceListItem(priceData);
-      console.log('Resposta:', response);
-      onSave(response.data);
+      // Salvar cada item individualmente
+      const savedItems = [];
+      for (const priceData of priceItems) {
+        const response = await apiService.createPriceListItem(priceData);
+        savedItems.push(response.data);
+      }
+
+      // Chamar callback com o primeiro item salvo para atualizar a lista
+      if (savedItems.length > 0) {
+        onSave(savedItems[0]);
+      }
+      
       onClose();
     } catch (error) {
-      console.error('Erro ao salvar preço:', error);
-      alert('Erro ao salvar preço. Verifique o console para mais detalhes.');
+      console.error('Erro ao salvar preços:', error);
+      alert('Erro ao salvar preços. Verifique o console para mais detalhes.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  const availableProducts = products.filter(product => 
+    !selectedProducts.some(sp => sp.productId === product._id)
+  );
 
   if (!isOpen) return null;
 
@@ -415,7 +495,7 @@ export const PriceListModal: React.FC<PriceListModalProps> = ({
       <ModalContainer onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
           <ModalTitle>
-            {priceItem ? 'Editar Preço' : 'Novo Preço'}
+            {priceItem ? 'Editar Lista de Preços' : 'Nova Lista de Preços'}
           </ModalTitle>
           <CloseButton onClick={onClose}>
             <X size={24} />
@@ -424,86 +504,43 @@ export const PriceListModal: React.FC<PriceListModalProps> = ({
 
         <form onSubmit={handleSubmit}>
           <ModalBody>
-            <FormGroup>
-              <Label>Distribuidor *</Label>
-              <Select
-                name="distributor"
-                value={formData.distributor}
-                onChange={handleInputChange}
-                $hasError={!!errors.distributor}
-              >
-                <option value="">Selecione um distribuidor</option>
-                {distributors.map(distributor => (
-                  <option key={distributor._id} value={distributor._id}>
-                    {distributor.apelido} - {distributor.razaoSocial}
-                  </option>
-                ))}
-              </Select>
-              {errors.distributor && <ErrorMessage>{errors.distributor}</ErrorMessage>}
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Produto *</Label>
-              <Select
-                name="product"
-                value={formData.product}
-                onChange={handleInputChange}
-                $hasError={!!errors.product}
-              >
-                <option value="">Selecione um produto</option>
-                {products.map(product => (
-                  <option key={product._id} value={product._id}>
-                    {product.name} - {product.description}
-                  </option>
-                ))}
-              </Select>
-              {errors.product && <ErrorMessage>{errors.product}</ErrorMessage>}
-            </FormGroup>
-
-            <Grid columns={3}>
+            <Grid columns={2}>
               <FormGroup>
-                <Label>À Vista *</Label>
-                <Input
-                  type="number"
-                  name="pricing.aVista"
-                  value={formData.pricing.aVista}
+                <Label>Distribuidor *</Label>
+                <Select
+                  name="distributor"
+                  value={formData.distributor}
                   onChange={handleInputChange}
-                  placeholder="0,00"
-                  step="0.01"
-                  min="0"
-                  $hasError={!!errors.aVista}
-                />
-                {errors.aVista && <ErrorMessage>{errors.aVista}</ErrorMessage>}
+                  $hasError={!!errors.distributor}
+                >
+                  <option value="">Selecione um distribuidor</option>
+                  {distributors.map(distributor => (
+                    <option key={distributor._id} value={distributor._id}>
+                      {distributor.apelido} - {distributor.razaoSocial}
+                    </option>
+                  ))}
+                </Select>
+                {errors.distributor && <ErrorMessage>{errors.distributor}</ErrorMessage>}
               </FormGroup>
 
               <FormGroup>
-                <Label>3x Boleto *</Label>
-                <Input
-                  type="number"
-                  name="pricing.tresXBoleto"
-                  value={formData.pricing.tresXBoleto}
-                  onChange={handleInputChange}
-                  placeholder="0,00"
-                  step="0.01"
-                  min="0"
-                  $hasError={!!errors.tresXBoleto}
-                />
-                {errors.tresXBoleto && <ErrorMessage>{errors.tresXBoleto}</ErrorMessage>}
-              </FormGroup>
-
-              <FormGroup>
-                <Label>3x Cartão *</Label>
-                <Input
-                  type="number"
-                  name="pricing.tresXCartao"
-                  value={formData.pricing.tresXCartao}
-                  onChange={handleInputChange}
-                  placeholder="0,00"
-                  step="0.01"
-                  min="0"
-                  $hasError={!!errors.tresXCartao}
-                />
-                {errors.tresXCartao && <ErrorMessage>{errors.tresXCartao}</ErrorMessage>}
+                <Label>Adicionar Produto</Label>
+                <Select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      addProduct(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                >
+                  <option value="">Selecione um produto</option>
+                  {availableProducts.map(product => (
+                    <option key={product._id} value={product._id}>
+                      {product.name}
+                    </option>
+                  ))}
+                </Select>
               </FormGroup>
             </Grid>
 
@@ -525,20 +562,71 @@ export const PriceListModal: React.FC<PriceListModalProps> = ({
                   name="validUntil"
                   value={formData.validUntil}
                   onChange={handleInputChange}
-                  $hasError={!!errors.validUntil}
                 />
-                {errors.validUntil && <ErrorMessage>{errors.validUntil}</ErrorMessage>}
               </FormGroup>
             </Grid>
 
+            {selectedProducts.length === 0 ? (
+              <EmptyState>
+                <p>Nenhum produto selecionado</p>
+                <p>Selecione um distribuidor e adicione produtos para configurar os preços</p>
+              </EmptyState>
+            ) : (
+              selectedProducts.map((product) => (
+                <ProductCard key={product.productId}>
+                  <ProductHeader>
+                    <ProductInfo>
+                      <h4>{product.product.name}</h4>
+                      <p>{product.product.description}</p>
+                    </ProductInfo>
+                    <RemoveButton onClick={() => removeProduct(product.productId)}>
+                      <Trash2 size={16} />
+                    </RemoveButton>
+                  </ProductHeader>
+
+                  {product.paymentMethods.map((payment, index) => (
+                    <PaymentMethodCard key={index}>
+                      <PaymentMethodHeader>
+                        <PaymentMethodType>
+                          {payment.type === 'aVista' ? 'À Vista' : 
+                           payment.type === 'boleto' ? 'Boleto' : 'Cartão'}
+                        </PaymentMethodType>
+                      </PaymentMethodHeader>
+                      <PaymentMethodInputs>
+                        <div>
+                          <Label>Parcelas</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={payment.installments}
+                            onChange={(e) => updatePaymentMethod(product.productId, index, 'installments', parseInt(e.target.value) || 1)}
+                          />
+                        </div>
+                        <div>
+                          <Label>Preço</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={payment.price}
+                            onChange={(e) => updatePaymentMethod(product.productId, index, 'price', parseFloat(e.target.value) || 0)}
+                            placeholder="0,00"
+                          />
+                        </div>
+                      </PaymentMethodInputs>
+                    </PaymentMethodCard>
+                  ))}
+                </ProductCard>
+              ))
+            )}
+
             <FormGroup>
               <Label>Observações</Label>
-              <Textarea
+              <Input
                 name="notes"
                 value={formData.notes}
                 onChange={handleInputChange}
-                placeholder="Observações sobre o preço..."
-                rows={3}
+                placeholder="Observações sobre a lista de preços..."
               />
             </FormGroup>
           </ModalBody>
@@ -563,7 +651,7 @@ export const PriceListModal: React.FC<PriceListModalProps> = ({
                   Salvando...
                 </>
               ) : (
-                'Salvar Preço'
+                'Salvar Lista de Preços'
               )}
             </Button>
           </ModalFooter>

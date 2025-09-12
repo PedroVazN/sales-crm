@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const priceListSchema = new mongoose.Schema({
   distributor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Distributor',
+    ref: 'DistributorNew',
     required: true
   },
   product: {

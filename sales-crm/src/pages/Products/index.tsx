@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Search, Filter, Edit, Trash2, Eye, Star, TrendingUp, DollarSign } from 'lucide-react';
-import { apiService } from '../../services/api';
+import { Package, Plus, Search, Filter, Edit, Trash2, Loader2 } from 'lucide-react';
+import { apiService, Product } from '../../services/api';
 import { 
   Container, 
   Header, 
@@ -11,68 +11,55 @@ import {
   CreateButton, 
   FilterButton,
   Content,
-  ProductsGrid,
-  ProductCard,
-  ProductImage,
-  ProductInfo,
-  ProductName,
-  ProductCategory,
-  ProductPrice,
-  ProductStock,
-  ProductActions,
+  Table,
+  TableHeader,
+  TableRow,
+  TableCell,
+  TableBody,
   ActionButton,
-  ProductStats,
-  StatItem,
-  StatValue,
-  StatLabel,
-  LoadingContainer,
+  StatusBadge,
   EmptyState,
-  EmptyIcon,
-  EmptyTitle,
-  EmptyDescription
+  LoadingState,
+  ErrorState
 } from './styles';
-
-interface Product {
-  _id: string;
-  name: string;
-  description?: string;
-  price: number;
-  category: string;
-  stock: {
-    current: number;
-    min: number;
-  };
-  isActive: boolean;
-  createdAt: string;
-}
 
 export const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  useEffect(() => {
-    const filtered = products.filter(product =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredProducts(filtered);
-  }, [products, searchTerm]);
 
   const loadProducts = async () => {
     try {
-      setIsLoading(true);
-      const response = await apiService.getProducts(1, 50);
+      setLoading(true);
+      setError(null);
+      const response = await apiService.getProducts(1, 100, searchTerm);
       setProducts(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
+    } catch (err) {
+      setError('Erro ao carregar produtos');
+      console.error('Erro ao carregar produtos:', err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+  }, [searchTerm]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleDeleteProduct = async (product: Product) => {
+    if (window.confirm(`Tem certeza que deseja excluir o produto ${product.name}?`)) {
+      try {
+        await apiService.deleteProduct(product._id);
+        loadProducts();
+      } catch (err) {
+        alert('Erro ao excluir produto');
+        console.error('Erro ao excluir produto:', err);
+      }
     }
   };
 
@@ -89,13 +76,62 @@ export const Products: React.FC = () => {
     return { status: 'Disponível', color: '#10b981' };
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Container>
-        <LoadingContainer>
-          <Package size={48} className="animate-spin" />
-          <p>Carregando produtos...</p>
-        </LoadingContainer>
+        <Header>
+          <Title>Produtos</Title>
+          <Actions>
+            <SearchContainer>
+              <Search size={20} />
+              <SearchInput placeholder="Pesquisar produtos..." disabled />
+            </SearchContainer>
+            <FilterButton disabled>
+              <Filter size={20} />
+              Filtros
+            </FilterButton>
+            <CreateButton disabled>
+              <Plus size={20} />
+              Novo Produto
+            </CreateButton>
+          </Actions>
+        </Header>
+        <Content>
+          <LoadingState>
+            <Loader2 size={32} />
+            <p>Carregando produtos...</p>
+          </LoadingState>
+        </Content>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <Header>
+          <Title>Produtos</Title>
+          <Actions>
+            <SearchContainer>
+              <Search size={20} />
+              <SearchInput placeholder="Pesquisar produtos..." disabled />
+            </SearchContainer>
+            <FilterButton disabled>
+              <Filter size={20} />
+              Filtros
+            </FilterButton>
+            <CreateButton disabled>
+              <Plus size={20} />
+              Novo Produto
+            </CreateButton>
+          </Actions>
+        </Header>
+        <Content>
+          <ErrorState>
+            <p>{error}</p>
+            <button onClick={loadProducts}>Tentar novamente</button>
+          </ErrorState>
+        </Content>
       </Container>
     );
   }
@@ -110,7 +146,7 @@ export const Products: React.FC = () => {
             <SearchInput 
               placeholder="Pesquisar produtos..." 
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearch}
             />
           </SearchContainer>
           <FilterButton>
@@ -125,62 +161,85 @@ export const Products: React.FC = () => {
       </Header>
       
       <Content>
-        {filteredProducts.length === 0 ? (
+        {products.length === 0 ? (
           <EmptyState>
-            <EmptyIcon>
-              <Package size={64} />
-            </EmptyIcon>
-            <EmptyTitle>Nenhum produto encontrado</EmptyTitle>
-            <EmptyDescription>
-              {searchTerm ? 'Tente ajustar sua pesquisa' : 'Comece adicionando seu primeiro produto'}
-            </EmptyDescription>
+            <Package size={48} />
+            <h3>Nenhum produto encontrado</h3>
+            <p>Comece criando seu primeiro produto</p>
+            <CreateButton>
+              <Plus size={20} />
+              Novo Produto
+            </CreateButton>
           </EmptyState>
         ) : (
-          <ProductsGrid>
-            {filteredProducts.map((product) => {
-              const stockStatus = getStockStatus(product.stock.current, product.stock.min);
-              
-              return (
-                <ProductCard key={product._id}>
-                  <ProductImage>
-                    <Package size={40} />
-                  </ProductImage>
-                  
-                  <ProductInfo>
-                    <ProductName>{product.name}</ProductName>
-                    <ProductCategory>{product.category}</ProductCategory>
-                    <ProductPrice>{formatPrice(product.price)}</ProductPrice>
-                    <ProductStock $color={stockStatus.color}>
-                      {product.stock.current} unidades - {stockStatus.status}
-                    </ProductStock>
-                  </ProductInfo>
-                  
-                  <ProductStats>
-                    <StatItem>
-                      <StatValue>R$ {(product.price * product.stock.current).toLocaleString('pt-BR')}</StatValue>
-                      <StatLabel>Valor Total</StatLabel>
-                    </StatItem>
-                    <StatItem>
-                      <StatValue>{product.stock.min}</StatValue>
-                      <StatLabel>Estoque Mín.</StatLabel>
-                    </StatItem>
-                  </ProductStats>
-                  
-                  <ProductActions>
-                    <ActionButton $variant="view">
-                      <Eye size={16} />
-                    </ActionButton>
-                    <ActionButton $variant="edit">
-                      <Edit size={16} />
-                    </ActionButton>
-                    <ActionButton $variant="delete">
-                      <Trash2 size={16} />
-                    </ActionButton>
-                  </ProductActions>
-                </ProductCard>
-              );
-            })}
-          </ProductsGrid>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableCell>Produto</TableCell>
+                <TableCell>Categoria</TableCell>
+                <TableCell>Preço</TableCell>
+                <TableCell>Estoque</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Ações</TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products.map((product) => {
+                const stockStatus = getStockStatus(product.stock.current, product.stock.min);
+                
+                return (
+                  <TableRow key={product._id}>
+                    <TableCell>
+                      <div>
+                        <strong>{product.name}</strong>
+                        {product.description && (
+                          <div style={{ fontSize: '0.9rem', color: '#666' }}>
+                            {product.description}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{product.category}</TableCell>
+                    <TableCell>
+                      <strong style={{ color: '#10b981' }}>
+                        {formatPrice(product.price)}
+                      </strong>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>
+                          {product.stock.current} unidades
+                        </div>
+                        <div style={{ 
+                          fontSize: '0.9rem', 
+                          color: stockStatus.color,
+                          fontWeight: 500
+                        }}>
+                          {stockStatus.status}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                          Mín: {product.stock.min}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge $isActive={product.isActive}>
+                        {product.isActive ? 'Ativo' : 'Inativo'}
+                      </StatusBadge>
+                    </TableCell>
+                    <TableCell>
+                      <ActionButton>
+                        <Edit size={16} />
+                      </ActionButton>
+                      <ActionButton onClick={() => handleDeleteProduct(product)}>
+                        <Trash2 size={16} />
+                      </ActionButton>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         )}
       </Content>
     </Container>
