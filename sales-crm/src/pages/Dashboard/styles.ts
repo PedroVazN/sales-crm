@@ -1,10 +1,11 @@
 import styled from 'styled-components';
 
 export const Container = styled.div`
-  padding: 32px;
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  padding: ${({ theme }) => theme.spacing.xxl};
+  background: ${({ theme }) => theme.colors.gradients.background};
   min-height: 100vh;
   position: relative;
+  animation: fadeIn 0.8s ease-out;
   
   &::before {
     content: '';
@@ -14,55 +15,127 @@ export const Container = styled.div`
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.05) 0%, transparent 50%);
+      radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
     pointer-events: none;
+    animation: float 20s ease-in-out infinite;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.01) 50%, transparent 70%),
+      linear-gradient(-45deg, transparent 30%, rgba(0, 212, 170, 0.02) 50%, transparent 70%);
+    pointer-events: none;
+    animation: shimmer 15s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-10px) rotate(0.5deg); }
+    66% { transform: translateY(5px) rotate(-0.5deg); }
+  }
+
+  @keyframes shimmer {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
   }
 `;
 
 export const Header = styled.div`
-  margin-bottom: 48px;
+  margin-bottom: ${({ theme }) => theme.spacing.xxl};
   position: relative;
   z-index: 1;
+  animation: slideIn 0.8s ease-out 0.2s both;
 `;
 
 export const Title = styled.h1`
   font-size: 2.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #00d4aa 0%, #6366f1 50%, #ec4899 100%);
+  background: ${({ theme }) => theme.colors.gradients.primary};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin: 0 0 8px 0;
-  text-shadow: 0 0 30px rgba(0, 212, 170, 0.3);
+  margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
+  text-shadow: 0 0 30px rgba(0, 212, 170, 0.4);
+  animation: glow 3s ease-in-out infinite alternate;
+  letter-spacing: -1px;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 80px;
+    height: 3px;
+    background: ${({ theme }) => theme.colors.gradients.primary};
+    border-radius: 3px;
+    animation: expand 1.2s ease-out 0.8s both;
+  }
+
+  @keyframes glow {
+    0%, 100% { 
+      filter: drop-shadow(0 0 15px rgba(0, 212, 170, 0.3)) drop-shadow(0 0 30px rgba(139, 92, 246, 0.2)); 
+    }
+    50% { 
+      filter: drop-shadow(0 0 25px rgba(0, 212, 170, 0.5)) drop-shadow(0 0 45px rgba(139, 92, 246, 0.3)); 
+    }
+  }
+
+  @keyframes expand {
+    from { width: 0; }
+    to { width: 80px; }
+  }
 `;
 
 export const Subtitle = styled.p`
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: ${({ theme }) => theme.colors.text.secondary};
   margin: 0;
   font-weight: 500;
+  animation: fadeInUp 0.8s ease-out 0.4s both;
+  line-height: 1.5;
 `;
 
 export const MetricsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 48px;
+  gap: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
   position: relative;
   z-index: 1;
+  animation: fadeInUp 0.8s ease-out 0.6s both;
 `;
 
 export const MetricCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 32px 24px;
+  background: ${({ theme }) => theme.colors.background.card};
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: ${({ theme }) => theme.spacing.lg};
   backdrop-filter: blur(20px);
-  transition: all 0.3s ease;
+  box-shadow: 
+    ${({ theme }) => theme.shadows.medium},
+    0 0 0 1px ${({ theme }) => theme.colors.border.primary},
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all ${({ theme }) => theme.transitions.normal};
   position: relative;
   overflow: hidden;
+  animation: scaleIn 0.6s ease-out both;
+
+  &:hover {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 
+      ${({ theme }) => theme.shadows.glow},
+      0 0 0 1px ${({ theme }) => theme.colors.border.secondary},
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
   
   &::before {
     content: '';
@@ -71,69 +144,46 @@ export const MetricCard = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+    background: ${({ theme }) => theme.colors.gradients.card};
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
+    z-index: -1;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: ${({ theme }) => theme.colors.gradients.primary};
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
+    z-index: -2;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity ${({ theme }) => theme.transitions.normal};
   }
-  
-  &:hover {
-    border-color: #00d4aa;
-    box-shadow: 
-      0 20px 40px rgba(0, 0, 0, 0.3),
-      0 0 0 1px rgba(0, 212, 170, 0.2);
-    transform: translateY(-5px);
-    
-    &::before {
-      opacity: 1;
-    }
+
+  &:hover::after {
+    opacity: 0.1;
   }
+
+  &:nth-child(1) { animation-delay: 0.1s; }
+  &:nth-child(2) { animation-delay: 0.2s; }
+  &:nth-child(3) { animation-delay: 0.3s; }
+  &:nth-child(4) { animation-delay: 0.4s; }
 `;
 
 export const MetricValue = styled.div`
   font-size: 2.5rem;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 8px;
+  background: ${({ theme }) => theme.colors.gradients.primary};
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  text-shadow: 0 0 20px rgba(0, 212, 170, 0.4);
+  animation: glow 2s ease-in-out infinite alternate;
   position: relative;
-  z-index: 1;
-`;
-
-export const MetricLabel = styled.div`
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 8px;
-  font-weight: 500;
-  position: relative;
-  z-index: 1;
-`;
-
-export const MetricChange = styled.div<{ $positive?: boolean }>`
-  font-size: 0.8rem;
-  color: ${({ $positive }) => 
-    $positive ? '#86efac' : '#fca5a5'};
-  font-weight: 600;
-  position: relative;
-  z-index: 1;
-`;
-
-export const ChartsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-  gap: 24px;
-  margin-bottom: 48px;
-  position: relative;
-  z-index: 1;
-`;
-
-export const ChartCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 32px 24px;
-  backdrop-filter: blur(20px);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
   
   &::before {
     content: '';
@@ -142,40 +192,145 @@ export const ChartCard = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(0, 212, 170, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  
-  &:hover {
-    border-color: #00d4aa;
-    box-shadow: 
-      0 20px 40px rgba(0, 0, 0, 0.3),
-      0 0 0 1px rgba(0, 212, 170, 0.2);
-    transform: translateY(-3px);
-    
-    &::before {
-      opacity: 1;
-    }
+    background: ${({ theme }) => theme.colors.gradients.primary};
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: blur(1px);
+    opacity: 0.3;
+    z-index: -1;
   }
 `;
 
-export const ChartTitle = styled.h3`
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 8px 0;
+export const MetricLabel = styled.div`
+  font-size: 0.9rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    width: 30px;
+    height: 2px;
+    background: ${({ theme }) => theme.colors.gradients.primary};
+    border-radius: 2px;
+    animation: expand 0.8s ease-out 1s both;
+  }
+`;
+
+export const MetricChange = styled.div<{ $positive?: boolean }>`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ${({ $positive, theme }) => 
+    $positive ? theme.colors.success : theme.colors.error};
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  background: ${({ $positive, theme }) => 
+    $positive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  border: 1px solid ${({ $positive, theme }) => 
+    $positive ? theme.colors.success : theme.colors.error};
+  backdrop-filter: blur(10px);
+  animation: fadeInUp 0.6s ease-out 1.2s both;
+`;
+
+export const ChartsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
   position: relative;
   z-index: 1;
+  animation: fadeInUp 0.8s ease-out 0.8s both;
+`;
+
+export const ChartCard = styled.div`
+  background: ${({ theme }) => theme.colors.background.card};
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  padding: ${({ theme }) => theme.spacing.lg};
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    ${({ theme }) => theme.shadows.medium},
+    0 0 0 1px ${({ theme }) => theme.colors.border.primary},
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all ${({ theme }) => theme.transitions.normal};
+  position: relative;
+  overflow: hidden;
+  animation: scaleIn 0.6s ease-out both;
+
+  &:hover {
+    transform: translateY(-4px) scale(1.005);
+    box-shadow: 
+      ${({ theme }) => theme.shadows.glow},
+      0 0 0 1px ${({ theme }) => theme.colors.border.secondary},
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${({ theme }) => theme.colors.gradients.card};
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
+    z-index: -1;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: ${({ theme }) => theme.colors.gradients.primary};
+    border-radius: ${({ theme }) => theme.borderRadius.lg};
+    z-index: -2;
+    opacity: 0;
+    transition: opacity ${({ theme }) => theme.transitions.normal};
+  }
+
+  &:hover::after {
+    opacity: 0.05;
+  }
+
+  &:nth-child(1) { animation-delay: 0.1s; }
+  &:nth-child(2) { animation-delay: 0.2s; }
+`;
+
+export const ChartTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
+  position: relative;
+  z-index: 1;
+  background: ${({ theme }) => theme.colors.gradients.primary};
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: fadeInUp 0.6s ease-out 1s both;
 `;
 
 export const ChartSubtitle = styled.p`
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 24px 0;
-  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin: 0 0 ${({ theme }) => theme.spacing.lg} 0;
   position: relative;
   z-index: 1;
+  font-weight: 500;
+  animation: fadeInUp 0.6s ease-out 1.1s both;
 `;
 
 export const ProductsList = styled.div`

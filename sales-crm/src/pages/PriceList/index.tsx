@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Plus, Search, Filter, Edit, Trash2, Loader2 } from 'lucide-react';
+import { DollarSign, Plus, Search, Filter, Edit, Trash2, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import { apiService, PriceListItem, Distributor, Product } from '../../services/api';
 import { PriceListModal } from '../../components/PriceListModal';
 import { 
@@ -21,11 +21,33 @@ import {
   StatusBadge,
   EmptyState,
   LoadingState,
-  ErrorState
+  ErrorState,
+  DistributorGroup,
+  DistributorHeader,
+  DistributorInfo,
+  DistributorName,
+  DistributorDetails,
+  ProductCount,
+  ToggleButton,
+  ProductsList,
+  ProductRow,
+  ProductInfo,
+  ProductName,
+  ProductDescription,
+  PricingInfo,
+  PriceItem,
+  PriceLabel,
+  PriceValue,
+  ProductActions
 } from './styles';
 
+interface GroupedPriceList {
+  distributor: Distributor;
+  products: PriceListItem[];
+}
+
 export const PriceList: React.FC = () => {
-  const [priceList, setPriceList] = useState<PriceListItem[]>([]);
+  const [priceList, setPriceList] = useState<GroupedPriceList[]>([]);
   const [distributors, setDistributors] = useState<Distributor[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,11 +55,22 @@ export const PriceList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingPriceItem, setEditingPriceItem] = useState<PriceListItem | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [deletingItems, setDeletingItems] = useState<string[]>([]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Verificar se está autenticado
+      if (!apiService.isAuthenticated()) {
+        console.log('Usuário não autenticado');
+        setError('Usuário não autenticado. Faça login para continuar.');
+        return;
+      }
+      
+      console.log('Usuário autenticado, carregando dados...');
       
       const [priceListResponse, distributorsResponse, productsResponse] = await Promise.all([
         apiService.getPriceList(1, 100),
@@ -45,7 +78,35 @@ export const PriceList: React.FC = () => {
         apiService.getProducts(1, 100)
       ]);
       
-      setPriceList(priceListResponse.data);
+      // O backend retorna dados já agrupados
+      const groupedData = priceListResponse.data as unknown as GroupedPriceList[];
+      console.log('Dados agrupados recebidos:', groupedData);
+      
+      // Verificar se os dados estão no formato correto
+      if (Array.isArray(groupedData) && groupedData.length > 0) {
+        // Verificar se cada item tem a estrutura correta
+        const validData = groupedData.filter(group => 
+          group && 
+          group.distributor && 
+          group.products && 
+          Array.isArray(group.products)
+        );
+        
+        console.log('Dados válidos após filtro:', validData);
+        setPriceList(validData);
+        
+        // Expandir todos os grupos por padrão
+        const allDistributorIds = new Set<string>();
+        validData.forEach(group => {
+          allDistributorIds.add(group.distributor._id.toString());
+        });
+        setExpandedGroups(allDistributorIds);
+      } else {
+        console.log('Nenhum dado válido encontrado');
+        setPriceList([]);
+        setExpandedGroups(new Set());
+      }
+      
       setDistributors(distributorsResponse.data);
       setProducts(productsResponse.data);
     } catch (err) {
@@ -77,19 +138,71 @@ export const PriceList: React.FC = () => {
   const handleDeletePriceItem = async (priceItem: PriceListItem) => {
     if (window.confirm(`Tem certeza que deseja excluir este item da lista de preços?`)) {
       try {
-        await apiService.deletePriceListItem(priceItem._id);
-        loadData();
+        console.log('Deletando item:', priceItem._id);
+        
+        // Adicionar item à lista de itens sendo deletados
+        setDeletingItems(prev => [...prev, priceItem._id]);
+        
+        // Fazer a requisição para o backend
+        const response = await apiService.deletePriceListItem(priceItem._id);
+        console.log('Resposta da API:', response);
+        
+        if (response.success || response.message) {
+          console.log('Item deletado com sucesso no backend');
+          
+          // Remover item da lista de itens sendo deletados
+          setDeletingItems(prev => prev.filter(id => id !== priceItem._id));
+          
+          // Forçar recarregamento imediato dos dados
+          console.log('Recarregando dados imediatamente...');
+          await loadData();
+          
+          // Mostrar mensagem de sucesso
+          alert('Item excluído com sucesso!');
+        } else {
+          throw new Error('Resposta inválida da API');
+        }
       } catch (err) {
-        alert('Erro ao excluir item');
         console.error('Erro ao excluir item:', err);
+        alert(`Erro ao excluir item: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+        
+        // Remover item da lista de itens sendo deletados em caso de erro
+        setDeletingItems(prev => prev.filter(id => id !== priceItem._id));
       }
     }
   };
 
-  const handleSavePriceItem = (priceItem: PriceListItem) => {
-    // Recarregar os dados para mostrar os novos itens
-    loadData();
-    setShowModal(false);
+  const handleSavePriceItem = async (priceItem: PriceListItem) => {
+    try {
+      console.log('Salvando item:', priceItem);
+      
+      if (editingPriceItem) {
+        // Editando item existente
+        console.log('Editando item existente');
+        await apiService.updatePriceListItem(priceItem._id, priceItem);
+        console.log('Item editado com sucesso');
+      } else {
+        // Criando novo item
+        console.log('Criando novo item');
+        await apiService.createPriceListItem({
+          distributor: priceItem.distributor._id,
+          product: priceItem.product._id,
+          pricing: priceItem.pricing,
+          isActive: priceItem.isActive,
+          validFrom: priceItem.validFrom,
+          validUntil: priceItem.validUntil,
+          notes: priceItem.notes
+        });
+        console.log('Item criado com sucesso');
+      }
+      
+      // Recarregar os dados para mostrar as mudanças
+      loadData();
+      setShowModal(false);
+    } catch (err) {
+      console.error('Erro ao salvar item:', err);
+      alert(`Erro ao salvar item: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -103,13 +216,28 @@ export const PriceList: React.FC = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const filteredPriceList = priceList.filter(item => {
+  const toggleGroup = (distributorId: string) => {
+    setExpandedGroups(prev => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(distributorId)) {
+        newExpanded.delete(distributorId);
+      } else {
+        newExpanded.add(distributorId);
+      }
+      return newExpanded;
+    });
+  };
+
+  const filteredPriceList = priceList.filter(group => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
-      item.distributor?.apelido?.toLowerCase().includes(search) ||
-      item.product?.name?.toLowerCase().includes(search) ||
-      item.product?.description?.toLowerCase().includes(search)
+      group.distributor?.apelido?.toLowerCase().includes(search) ||
+      group.distributor?.razaoSocial?.toLowerCase().includes(search) ||
+      group.products.some(product => 
+        product.product?.name?.toLowerCase().includes(search) ||
+        product.product?.description?.toLowerCase().includes(search)
+      )
     );
   });
 
@@ -209,80 +337,93 @@ export const PriceList: React.FC = () => {
             </CreateButton>
           </EmptyState>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableCell>Distribuidor</TableCell>
-                <TableCell>Produto</TableCell>
-                <TableCell>Preços</TableCell>
-                <TableCell>Válido Até</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Ações</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPriceList.map((item) => (
-                <TableRow key={item._id}>
-                  <TableCell>
-                    <div>
-                      <strong>{item.distributor?.apelido || 'N/A'}</strong>
-                      <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                        {item.distributor?.razaoSocial || 'N/A'}
-                      </div>
+          <div>
+            {filteredPriceList.map((group, groupIndex) => {
+              console.log(`Renderizando grupo ${groupIndex}:`, group);
+              const distributorId = group.distributor._id.toString();
+              const isExpanded = expandedGroups.has(distributorId);
+              
+              return (
+                <DistributorGroup key={distributorId}>
+                  <DistributorHeader onClick={() => toggleGroup(distributorId)}>
+                    <DistributorInfo>
+                      <DistributorName>{group.distributor.apelido || 'N/A'}</DistributorName>
+                      <DistributorDetails>{group.distributor.razaoSocial || 'N/A'}</DistributorDetails>
+                    </DistributorInfo>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <ProductCount>{group.products.length} produto{group.products.length !== 1 ? 's' : ''}</ProductCount>
+                      <ToggleButton>
+                        {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                      </ToggleButton>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <strong>{item.product?.name || 'N/A'}</strong>
-                      {item.product?.description && (
-                        <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                          {item.product.description}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      {item.pricing?.aVista > 0 && (
-                        <div style={{ fontSize: '0.875rem' }}>
-                          <span style={{ color: '#10b981', fontWeight: '600' }}>À Vista: </span>
-                          {formatCurrency(item.pricing.aVista)}
-                        </div>
-                      )}
-                      {item.pricing?.tresXBoleto > 0 && (
-                        <div style={{ fontSize: '0.875rem' }}>
-                          <span style={{ color: '#3b82f6', fontWeight: '600' }}>3x Boleto: </span>
-                          {formatCurrency(item.pricing.tresXBoleto)}
-                        </div>
-                      )}
-                      {item.pricing?.tresXCartao > 0 && (
-                        <div style={{ fontSize: '0.875rem' }}>
-                          <span style={{ color: '#8b5cf6', fontWeight: '600' }}>3x Cartão: </span>
-                          {formatCurrency(item.pricing.tresXCartao)}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {item.validUntil ? formatDate(item.validUntil) : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge $isActive={item.isActive}>
-                      {item.isActive ? 'Ativo' : 'Inativo'}
-                    </StatusBadge>
-                  </TableCell>
-                  <TableCell>
-                    <ActionButton onClick={() => handleEditPriceItem(item)}>
-                      <Edit size={16} />
-                    </ActionButton>
-                    <ActionButton onClick={() => handleDeletePriceItem(item)}>
-                      <Trash2 size={16} />
-                    </ActionButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </DistributorHeader>
+                  
+                  {isExpanded && (
+                    <ProductsList>
+                      {group.products.map((product) => {
+                        const isDeleting = deletingItems.includes(product._id);
+                        return (
+                          <ProductRow key={product._id} style={{ opacity: isDeleting ? 0.5 : 1 }}>
+                            <ProductInfo>
+                              <ProductName>{product.product?.name || 'N/A'}</ProductName>
+                              {product.product?.description && (
+                                <ProductDescription>{product.product.description}</ProductDescription>
+                              )}
+                            </ProductInfo>
+                          
+                          <PricingInfo>
+                            {product.pricing?.aVista > 0 && (
+                              <PriceItem>
+                                <PriceLabel $color="#10b981">À Vista:</PriceLabel>
+                                <PriceValue>{formatCurrency(product.pricing.aVista)}</PriceValue>
+                              </PriceItem>
+                            )}
+                            {product.pricing?.tresXBoleto > 0 && (
+                              <PriceItem>
+                                <PriceLabel $color="#3b82f6">3x Boleto:</PriceLabel>
+                                <PriceValue>{formatCurrency(product.pricing.tresXBoleto)}</PriceValue>
+                              </PriceItem>
+                            )}
+                            {product.pricing?.tresXCartao > 0 && (
+                              <PriceItem>
+                                <PriceLabel $color="#8b5cf6">3x Cartão:</PriceLabel>
+                                <PriceValue>{formatCurrency(product.pricing.tresXCartao)}</PriceValue>
+                              </PriceItem>
+                            )}
+                          </PricingInfo>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+                            <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                              {product.validUntil ? formatDate(product.validUntil) : 'N/A'}
+                            </div>
+                            <StatusBadge $isActive={product.isActive}>
+                              {product.isActive ? 'Ativo' : 'Inativo'}
+                            </StatusBadge>
+                          </div>
+                          
+                          <ProductActions>
+                            <ActionButton 
+                              onClick={() => handleEditPriceItem(product)}
+                              disabled={isDeleting}
+                            >
+                              <Edit size={16} />
+                            </ActionButton>
+                            <ActionButton 
+                              onClick={() => handleDeletePriceItem(product)}
+                              disabled={isDeleting}
+                            >
+                              {isDeleting ? <Loader2 size={16} /> : <Trash2 size={16} />}
+                            </ActionButton>
+                          </ProductActions>
+                        </ProductRow>
+                        );
+                      })}
+                    </ProductsList>
+                  )}
+                </DistributorGroup>
+              );
+            })}
+          </div>
         )}
       </Content>
 

@@ -6,7 +6,7 @@ const auth = async (req, res, next) => {
     // Modo desenvolvimento - criar usuário temporário
     if (process.env.NODE_ENV === 'development') {
       req.user = {
-        id: 'dev-user-id',
+        id: '68c1afbcf906c14a8e7e8ff7', // ObjectId válido do MongoDB
         name: 'Usuário Desenvolvimento',
         email: 'dev@example.com',
         role: 'admin'

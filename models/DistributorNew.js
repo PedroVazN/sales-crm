@@ -133,9 +133,7 @@ const distributorSchema = new mongoose.Schema({
 });
 
 // Índices para melhor performance
-distributorSchema.index({ apelido: 1 });
 distributorSchema.index({ razaoSocial: 1 });
-distributorSchema.index({ idDistribuidor: 1 });
 distributorSchema.index({ 'contato.nome': 1 });
 distributorSchema.index({ origem: 1 });
 distributorSchema.index({ isActive: 1 });

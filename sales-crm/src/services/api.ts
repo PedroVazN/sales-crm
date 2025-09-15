@@ -243,9 +243,15 @@ class ApiService {
       ...options,
     };
 
+    console.log('Fazendo requisição para:', url);
+    console.log('Headers:', config.headers);
+    console.log('Token:', this.token);
+
     try {
       const response = await fetch(url, config);
       const data = await response.json();
+
+      console.log('Resposta da API:', response.status, data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Erro na requisição');

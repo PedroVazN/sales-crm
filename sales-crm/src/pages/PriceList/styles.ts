@@ -264,3 +264,144 @@ export const ErrorState = styled.div`
     }
   }
 `;
+
+// Novos estilos para agrupamento
+export const DistributorGroup = styled.div`
+  background: ${({ theme }) => theme.colors.background.card};
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  overflow: hidden;
+  box-shadow: ${({ theme }) => theme.shadows.medium};
+`;
+
+export const DistributorHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: ${({ theme }) => theme.spacing.lg};
+  background: ${({ theme }) => theme.colors.background.secondary};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.tertiary};
+  }
+`;
+
+export const DistributorInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+export const DistributorName = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0;
+`;
+
+export const DistributorDetails = styled.p`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin: 0;
+`;
+
+export const ProductCount = styled.span`
+  background: ${({ theme }) => theme.colors.primary}20;
+  color: ${({ theme }) => theme.colors.primary};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.full};
+  font-size: 0.75rem;
+  font-weight: 600;
+`;
+
+export const ToggleButton = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  background: ${({ theme }) => theme.colors.background.primary};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.secondary};
+    color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+export const ProductsList = styled.div`
+  background: ${({ theme }) => theme.colors.background.primary};
+  border-top: 1px solid ${({ theme }) => theme.colors.border.primary};
+`;
+
+export const ProductRow = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 1fr;
+  gap: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.lg};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.primary};
+  align-items: center;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.secondary};
+  }
+`;
+
+export const ProductInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+export const ProductName = styled.h4`
+  font-size: 1rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0;
+`;
+
+export const ProductDescription = styled.p`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin: 0;
+`;
+
+export const PricingInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+export const PriceItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+export const PriceLabel = styled.span<{ $color: string }>`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ${({ $color }) => $color};
+`;
+
+export const PriceValue = styled.span`
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+export const ProductActions = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.sm};
+  justify-content: flex-end;
+`;

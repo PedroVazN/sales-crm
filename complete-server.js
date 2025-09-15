@@ -1,8 +1,115 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const mongoose = require('mongoose');
 
 const app = express();
+
+// Conectar ao MongoDB
+const connectDB = async () => {
+  try {
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://edvar:edvar123@cluster0.npuas1m.mongodb.net/sellone?retryWrites=true&w=majority';
+    const conn = await mongoose.connect(mongoUri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log(`MongoDB conectado: ${conn.connection.host}`);
+  } catch (error) {
+    console.error('Erro ao conectar com MongoDB:', error.message);
+    process.exit(1);
+  }
+};
+
+// Conectar ao banco
+connectDB();
+
+// Modelos do MongoDB
+const PriceListSchema = new mongoose.Schema({
+  distributor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'DistributorNew',
+    required: true
+  },
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true
+  },
+  pricing: {
+    aVista: { type: Number, required: true, min: 0 },
+    tresXBoleto: { type: Number, required: true, min: 0 },
+    tresXCartao: { type: Number, required: true, min: 0 }
+  },
+  isActive: { type: Boolean, default: true },
+  validFrom: { type: Date, default: Date.now },
+  validUntil: { type: Date, default: () => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
+  notes: { type: String, trim: true },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+}, { timestamps: true });
+
+const DistributorSchema = new mongoose.Schema({
+  apelido: { type: String, required: true },
+  razaoSocial: { type: String, required: true },
+  idDistribuidor: { type: String, unique: true },
+  contato: {
+    nome: String,
+    email: String,
+    telefone: String,
+    cargo: String
+  },
+  origem: String,
+  atendimento: {
+    horario: String,
+    dias: String,
+    observacoes: String
+  },
+  frete: {
+    tipo: String,
+    valor: Number,
+    prazo: Number,
+    observacoes: String
+  },
+  pedidoMinimo: {
+    valor: Number,
+    observacoes: String
+  },
+  endereco: {
+    cep: String,
+    logradouro: String,
+    numero: String,
+    complemento: String,
+    bairro: String,
+    cidade: String,
+    uf: String
+  },
+  isActive: { type: Boolean, default: true },
+  observacoes: String,
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+}, { timestamps: true });
+
+const ProductSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: String,
+  price: { type: Number, required: true, min: 0 },
+  cost: { type: Number, min: 0 },
+  category: String,
+  brand: String,
+  sku: { type: String, unique: true },
+  barcode: { type: String, unique: true },
+  stock: {
+    current: { type: Number, default: 0 },
+    min: { type: Number, default: 0 },
+    max: { type: Number, default: 0 }
+  },
+  images: [{ url: String, alt: String }],
+  tags: [String],
+  isActive: { type: Boolean, default: true },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+}, { timestamps: true });
+
+const PriceList = mongoose.model('PriceList', PriceListSchema);
+const Distributor = mongoose.model('DistributorNew', DistributorSchema);
+const Product = mongoose.model('Product', ProductSchema);
 
 // Middlewares
 app.use(cors({
@@ -128,7 +235,51 @@ app.get('/api/users', (req, res) => {
 });
 
 // Rota de produtos
-app.get('/api/products', (req, res) => {
+app.get('/api/products', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search, category } = req.query;
+    const skip = (page - 1) * limit;
+
+    let query = { createdBy: '68c1afbcf906c14a8e7e8ff7' };
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (category) {
+      query.category = category;
+    }
+
+    const products = await Product.find(query)
+      .populate('createdBy', 'name email')
+      .sort({ name: 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Product.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: products,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / limit),
+        total,
+        limit: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar produtos:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Rota de produtos (fallback para dados mock se necessário)
+app.get('/api/products-mock', (req, res) => {
   const products = [
     {
       _id: '1',
@@ -454,7 +605,55 @@ app.get('/api/clients/stats/summary', (req, res) => {
 });
 
 // Rota de distribuidores
-app.get('/api/distributors', (req, res) => {
+app.get('/api/distributors', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search, origem, isActive } = req.query;
+    const skip = (page - 1) * limit;
+
+    let query = { createdBy: '68c1afbcf906c14a8e7e8ff7' };
+
+    if (search) {
+      query.$or = [
+        { apelido: { $regex: search, $options: 'i' } },
+        { razaoSocial: { $regex: search, $options: 'i' } },
+        { 'contato.nome': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (origem) {
+      query.origem = origem;
+    }
+
+    if (isActive !== undefined) {
+      query.isActive = isActive === 'true';
+    }
+
+    const distributors = await Distributor.find(query)
+      .populate('createdBy', 'name email')
+      .sort({ apelido: 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Distributor.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: distributors,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / limit),
+        total,
+        limit: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar distribuidores:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Rota de distribuidores (fallback para dados mock se necessário)
+app.get('/api/distributors-mock', (req, res) => {
   const distributors = [
     {
       _id: '1',
@@ -856,113 +1055,237 @@ let priceListData = [
     },
     createdAt: '2024-01-15T10:00:00Z',
     updatedAt: '2024-01-15T10:00:00Z'
-  }
-];
-
-// Rota de lista de preços
-app.get('/api/price-list', (req, res) => {
-  const priceList = priceListData;
-
-  const { page = 1, limit = 10, distributor, product, isActive } = req.query;
-  const skip = (page - 1) * limit;
-
-  let filteredPriceList = priceList;
-
-  if (distributor) {
-    filteredPriceList = filteredPriceList.filter(p => p.distributor._id === distributor);
-  }
-
-  if (product) {
-    filteredPriceList = filteredPriceList.filter(p => p.product._id === product);
-  }
-
-  if (isActive !== undefined) {
-    filteredPriceList = filteredPriceList.filter(p => p.isActive === (isActive === 'true'));
-  }
-
-  const paginatedPriceList = filteredPriceList.slice(skip, skip + parseInt(limit));
-
-  res.json({
-    success: true,
-    data: paginatedPriceList,
-    pagination: {
-      current: parseInt(page),
-      pages: Math.ceil(filteredPriceList.length / limit),
-      total: filteredPriceList.length,
-      limit: parseInt(limit)
-    }
-  });
-});
-
-// Rota para criar item da lista de preços
-app.post('/api/price-list', (req, res) => {
-  const { distributor, product, pricing, isActive, validFrom, validUntil, notes } = req.body;
-  
-  // Buscar dados do distribuidor e produto
-  const distributors = [
-    {
+  },
+  {
+    _id: '2',
+    distributor: {
       _id: '1',
       apelido: 'Distribuidor Alpha',
       razaoSocial: 'Alpha Distribuidora Ltda'
     },
-    {
-      _id: '2',
-      apelido: 'Beta Corp',
-      razaoSocial: 'Beta Corporation S.A.'
-    },
-    {
-      _id: '3',
-      apelido: 'Gamma Tech',
-      razaoSocial: 'Gamma Tecnologia Ltda'
-    }
-  ];
-  
-  const products = [
-    {
-      _id: '1',
-      name: 'Sistema CRM Pro',
-      description: 'Sistema completo de gestão de relacionamento com clientes'
-    },
-    {
+    product: {
       _id: '2',
       name: 'Consultoria Empresarial',
       description: 'Consultoria especializada em transformação digital'
     },
-    {
-      _id: '3',
-      name: 'Plano Premium',
-      description: 'Plano premium com recursos avançados'
-    }
-  ];
-  
-  const distributorData = distributors.find(d => d._id === distributor);
-  const productData = products.find(p => p._id === product);
-  
-  const newPriceItem = {
-    _id: Date.now().toString(),
-    distributor: distributorData,
-    product: productData,
-    pricing: pricing || { aVista: 0, tresXBoleto: 0, tresXCartao: 0 },
-    isActive: isActive !== undefined ? isActive : true,
-    validFrom: validFrom || new Date().toISOString(),
-    validUntil: validUntil || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-    notes: notes || '',
+    pricing: {
+      aVista: 1500.00,
+      tresXBoleto: 1600.00,
+      tresXCartao: 1700.00
+    },
+    isActive: true,
+    validFrom: '2024-01-01T00:00:00Z',
+    validUntil: '2024-12-31T23:59:59Z',
+    notes: 'Consultoria premium',
     createdBy: {
       _id: '1',
       name: 'Administrador',
       email: 'admin@sellone.com'
     },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+    createdAt: '2024-01-15T10:00:00Z',
+    updatedAt: '2024-01-15T10:00:00Z'
+  },
+  {
+    _id: '3',
+    distributor: {
+      _id: '2',
+      apelido: 'Beta Corp',
+      razaoSocial: 'Beta Corporation S.A.'
+    },
+    product: {
+      _id: '1',
+      name: 'Sistema CRM Pro',
+      description: 'Sistema completo de gestão'
+    },
+    pricing: {
+      aVista: 350.00,
+      tresXBoleto: 370.00,
+      tresXCartao: 380.00
+    },
+    isActive: true,
+    validFrom: '2024-01-01T00:00:00Z',
+    validUntil: '2024-12-31T23:59:59Z',
+    notes: 'Preço para Beta Corp',
+    createdBy: {
+      _id: '1',
+      name: 'Administrador',
+      email: 'admin@sellone.com'
+    },
+    createdAt: '2024-01-15T10:00:00Z',
+    updatedAt: '2024-01-15T10:00:00Z'
+  },
+  {
+    _id: '4',
+    distributor: {
+      _id: '2',
+      apelido: 'Beta Corp',
+      razaoSocial: 'Beta Corporation S.A.'
+    },
+    product: {
+      _id: '3',
+      name: 'Plano Premium',
+      description: 'Plano premium com recursos avançados'
+    },
+    pricing: {
+      aVista: 199.90,
+      tresXBoleto: 219.90,
+      tresXCartao: 229.90
+    },
+    isActive: true,
+    validFrom: '2024-01-01T00:00:00Z',
+    validUntil: '2024-12-31T23:59:59Z',
+    notes: 'Plano premium Beta',
+    createdBy: {
+      _id: '1',
+      name: 'Administrador',
+      email: 'admin@sellone.com'
+    },
+    createdAt: '2024-01-15T10:00:00Z',
+    updatedAt: '2024-01-15T10:00:00Z'
+  }
+];
 
-  // Adicionar à lista persistente
-  priceListData.push(newPriceItem);
+// Rota de lista de preços
+app.get('/api/price-list', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, distributor, product, isActive } = req.query;
+    const skip = (page - 1) * limit;
 
-  res.status(201).json({
-    success: true,
-    data: newPriceItem
-  });
+    let query = { createdBy: '68c1afbcf906c14a8e7e8ff7' }; // ID do usuário fixo para desenvolvimento
+    
+    if (distributor) {
+      query.distributor = distributor;
+    }
+    
+    if (product) {
+      query.product = product;
+    }
+    
+    if (isActive !== undefined) {
+      query.isActive = isActive === 'true';
+    }
+
+    // Buscar todos os itens da lista de preços
+    console.log('Query para buscar itens:', query);
+    const priceList = await PriceList.find(query)
+      .populate('distributor', 'apelido razaoSocial contato.nome')
+      .populate('product', 'name description price category')
+      .populate('createdBy', 'name email')
+      .sort({ 'distributor.apelido': 1, 'product.name': 1 });
+    
+    console.log('Itens encontrados no banco:', priceList.length);
+
+    // Agrupar por distribuidor
+    const groupedData = priceList.reduce((acc, item) => {
+      const distributorId = item.distributor._id.toString();
+      
+      if (!acc[distributorId]) {
+        acc[distributorId] = {
+          distributor: item.distributor,
+          products: []
+        };
+      }
+      
+      acc[distributorId].products.push({
+        _id: item._id,
+        product: item.product,
+        pricing: item.pricing,
+        isActive: item.isActive,
+        validFrom: item.validFrom,
+        validUntil: item.validUntil,
+        notes: item.notes,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt
+      });
+      
+      return acc;
+    }, {});
+
+    // Converter para array e aplicar paginação
+    const groupedArray = Object.values(groupedData);
+    const total = groupedArray.length;
+    const paginatedData = groupedArray.slice(skip, skip + parseInt(limit));
+
+    console.log('Dados agrupados enviados para o frontend:', JSON.stringify(paginatedData, null, 2));
+
+    res.json({
+      success: true,
+      data: paginatedData,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / limit),
+        total,
+        limit: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar lista de preços:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Rota para criar item da lista de preços
+app.post('/api/price-list', async (req, res) => {
+  try {
+    const {
+      distributor,
+      product,
+      pricing,
+      isActive,
+      validFrom,
+      validUntil,
+      notes
+    } = req.body;
+
+    // Validações básicas
+    if (!distributor || !product || !pricing) {
+      return res.status(400).json({ 
+        error: 'Distribuidor, produto e preços são obrigatórios' 
+      });
+    }
+
+    if (!pricing.aVista || !pricing.tresXBoleto || !pricing.tresXCartao) {
+      return res.status(400).json({ 
+        error: 'Todos os valores de preço são obrigatórios' 
+      });
+    }
+
+    // Verificar se já existe um item para este distribuidor e produto
+    const existingItem = await PriceList.findOne({
+      distributor,
+      product,
+      createdBy: '68c1afbcf906c14a8e7e8ff7'
+    });
+
+    if (existingItem) {
+      return res.status(400).json({ 
+        error: 'Já existe um preço cadastrado para este distribuidor e produto' 
+      });
+    }
+
+    const priceItem = new PriceList({
+      distributor,
+      product,
+      pricing,
+      validFrom: validFrom ? new Date(validFrom) : undefined,
+      validUntil: validUntil ? new Date(validUntil) : undefined,
+      notes,
+      createdBy: '68c1afbcf906c14a8e7e8ff7'
+    });
+
+    await priceItem.save();
+    await priceItem.populate('distributor', 'apelido razaoSocial contato.nome');
+    await priceItem.populate('product', 'name description price category');
+    await priceItem.populate('createdBy', 'name email');
+
+    res.status(201).json({ 
+      success: true,
+      data: priceItem 
+    });
+  } catch (error) {
+    console.error('Erro ao criar item da lista de preços:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 });
 
 // Rota para atualizar item da lista de preços
@@ -1002,11 +1325,53 @@ app.put('/api/price-list/:id', (req, res) => {
 });
 
 // Rota para deletar item da lista de preços
-app.delete('/api/price-list/:id', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Item da lista de preços deletado com sucesso'
-  });
+app.delete('/api/price-list/:id', async (req, res) => {
+  try {
+    console.log('Tentando deletar item:', req.params.id);
+    
+    // Primeiro, verificar se o item existe
+    const existingItem = await PriceList.findOne({
+      _id: req.params.id,
+      createdBy: '68c1afbcf906c14a8e7e8ff7'
+    });
+    
+    if (!existingItem) {
+      console.log('Item não encontrado ou não pertence ao usuário');
+      return res.status(404).json({ error: 'Item não encontrado' });
+    }
+    
+    console.log('Item encontrado, procedendo com a exclusão:', existingItem);
+    
+    const priceItem = await PriceList.findOneAndDelete({
+      _id: req.params.id,
+      createdBy: '68c1afbcf906c14a8e7e8ff7'
+    });
+
+    if (!priceItem) {
+      console.log('Falha na exclusão - item não foi deletado');
+      return res.status(500).json({ error: 'Falha ao deletar item' });
+    }
+
+    console.log('Item deletado com sucesso do banco de dados:', priceItem._id);
+    
+    // Verificar se o item foi realmente deletado
+    const verifyDeletion = await PriceList.findOne({ _id: req.params.id });
+    console.log('Verificação pós-exclusão - item ainda existe?', !!verifyDeletion);
+    
+    // Verificar quantos itens restam no banco para este usuário
+    const remainingItems = await PriceList.countDocuments({ createdBy: '68c1afbcf906c14a8e7e8ff7' });
+    console.log('Total de itens restantes para o usuário:', remainingItems);
+    
+    res.json({ 
+      success: true,
+      message: 'Item da lista de preços deletado com sucesso',
+      deletedItem: priceItem._id,
+      remainingItems: remainingItems
+    });
+  } catch (error) {
+    console.error('Erro ao deletar item da lista de preços:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 });
 
 // Servir arquivos estáticos do frontend
