@@ -26,9 +26,9 @@ export const SearchContainer = styled.div`
   transition: all 0.3s ease;
   
   &:focus-within {
-    border-color: #00d4aa;
+    border-color: #3b82f6;
     background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
   
   svg {
@@ -38,7 +38,7 @@ export const SearchContainer = styled.div`
   }
   
   &:focus-within svg {
-    color: #00d4aa;
+    color: #3b82f6;
   }
 `;
 
@@ -75,11 +75,11 @@ export const NotificationButton = styled.button`
   backdrop-filter: blur(10px);
   
   &:hover {
-    color: #00d4aa;
-    border-color: #00d4aa;
-    background: rgba(0, 212, 170, 0.1);
+    color: #3b82f6;
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 212, 170, 0.2);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
   }
 `;
 
@@ -112,11 +112,11 @@ export const UserButton = styled.button`
   backdrop-filter: blur(10px);
   
   &:hover {
-    color: #00d4aa;
-    border-color: #00d4aa;
-    background: rgba(0, 212, 170, 0.1);
+    color: #3b82f6;
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 212, 170, 0.2);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
   }
   
   span {

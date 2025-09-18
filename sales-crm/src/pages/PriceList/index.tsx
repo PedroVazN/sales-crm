@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Plus, Search, Filter, Edit, Trash2, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
-import { apiService, PriceListItem, Distributor, Product } from '../../services/api';
-import { PriceListModal } from '../../components/PriceListModal';
+import { DollarSign, Plus, Search, Edit, Trash2, Loader2, Download } from 'lucide-react';
+import { apiService, PriceList as PriceListType, Distributor, Product } from '../../services/api';
 import { 
   Container, 
   Header, 
@@ -10,8 +9,8 @@ import {
   SearchContainer, 
   SearchInput, 
   CreateButton, 
-  FilterButton,
   Content,
+  TableWrapper,
   Table,
   TableHeader,
   TableRow,
@@ -22,40 +21,52 @@ import {
   EmptyState,
   LoadingState,
   ErrorState,
-  DistributorGroup,
-  DistributorHeader,
-  DistributorInfo,
-  DistributorName,
-  DistributorDetails,
-  ProductCount,
-  ToggleButton,
-  ProductsList,
-  ProductRow,
-  ProductInfo,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalBody,
+  ModalFooter,
+  FormGroup,
+  Label,
+  Select,
+  Button,
+  ProductItem,
+  ProductHeader,
   ProductName,
-  ProductDescription,
-  PricingInfo,
-  PriceItem,
+  ProductPricing,
+  PriceRow,
   PriceLabel,
-  PriceValue,
-  ProductActions
+  PriceInput,
+  RemoveButton,
+  AddProductButton
 } from './styles';
 
-interface GroupedPriceList {
-  distributor: Distributor;
-  products: PriceListItem[];
-}
+
 
 export const PriceList: React.FC = () => {
-  const [priceList, setPriceList] = useState<GroupedPriceList[]>([]);
+  const [priceLists, setPriceLists] = useState<PriceListType[]>([]);
   const [distributors, setDistributors] = useState<Distributor[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [editingPriceItem, setEditingPriceItem] = useState<PriceListItem | null>(null);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [editingPriceList, setEditingPriceList] = useState<PriceListType | null>(null);
+  const [selectedDistributor, setSelectedDistributor] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<{
+    productId: string;
+    productName: string;
+    pricing: {
+      aVista: number;
+      cartao: number;
+      boleto: number;
+    };
+    isActive: boolean;
+    validFrom: string;
+    validUntil: string;
+    notes: string;
+  }[]>([]);
   const [deletingItems, setDeletingItems] = useState<string[]>([]);
 
   const loadData = async () => {
@@ -63,14 +74,7 @@ export const PriceList: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      // Verificar se está autenticado
-      if (!apiService.isAuthenticated()) {
-        console.log('Usuário não autenticado');
-        setError('Usuário não autenticado. Faça login para continuar.');
-        return;
-      }
-      
-      console.log('Usuário autenticado, carregando dados...');
+      console.log('Carregando dados...');
       
       const [priceListResponse, distributorsResponse, productsResponse] = await Promise.all([
         apiService.getPriceList(1, 100),
@@ -78,37 +82,17 @@ export const PriceList: React.FC = () => {
         apiService.getProducts(1, 100)
       ]);
       
-      // O backend retorna dados já agrupados
-      const groupedData = priceListResponse.data as unknown as GroupedPriceList[];
-      console.log('Dados agrupados recebidos:', groupedData);
+      console.log('Resposta da API:', priceListResponse);
       
-      // Verificar se os dados estão no formato correto
-      if (Array.isArray(groupedData) && groupedData.length > 0) {
-        // Verificar se cada item tem a estrutura correta
-        const validData = groupedData.filter(group => 
-          group && 
-          group.distributor && 
-          group.products && 
-          Array.isArray(group.products)
-        );
-        
-        console.log('Dados válidos após filtro:', validData);
-        setPriceList(validData);
-        
-        // Expandir todos os grupos por padrão
-        const allDistributorIds = new Set<string>();
-        validData.forEach(group => {
-          allDistributorIds.add(group.distributor._id.toString());
-        });
-        setExpandedGroups(allDistributorIds);
-      } else {
-        console.log('Nenhum dado válido encontrado');
-        setPriceList([]);
-        setExpandedGroups(new Set());
-      }
+      setPriceLists(priceListResponse.data || []);
+      setDistributors(distributorsResponse.data || []);
+      setProducts(productsResponse.data || []);
       
-      setDistributors(distributorsResponse.data);
-      setProducts(productsResponse.data);
+      console.log('Dados carregados:', {
+        priceLists: priceListResponse.data?.length || 0,
+        distributors: distributorsResponse.data?.length || 0,
+        products: productsResponse.data?.length || 0
+      });
     } catch (err) {
       setError('Erro ao carregar dados');
       console.error('Erro ao carregar dados:', err);
@@ -126,83 +110,122 @@ export const PriceList: React.FC = () => {
   };
 
   const handleCreatePriceList = () => {
-    setEditingPriceItem(null);
+    setEditingPriceList(null);
+    setSelectedDistributor('');
+    setSelectedProducts([]);
     setShowModal(true);
   };
 
-  const handleEditPriceItem = (priceItem: PriceListItem) => {
-    setEditingPriceItem(priceItem);
+  const handleEditPriceList = (priceList: PriceListType) => {
+    setEditingPriceList(priceList);
+    setSelectedDistributor(priceList.distributor._id);
+    setSelectedProducts(priceList.products.map(p => ({
+      productId: p.product._id,
+      productName: p.product.name,
+      pricing: p.pricing,
+      isActive: p.isActive,
+      validFrom: p.validFrom,
+      validUntil: p.validUntil,
+      notes: p.notes
+    })));
     setShowModal(true);
   };
 
-  const handleDeletePriceItem = async (priceItem: PriceListItem) => {
-    if (window.confirm(`Tem certeza que deseja excluir este item da lista de preços?`)) {
+  const handleDeletePriceList = async (priceList: PriceListType) => {
+    if (window.confirm(`Tem certeza que deseja excluir esta lista de preços?`)) {
       try {
-        console.log('Deletando item:', priceItem._id);
+        setDeletingItems(prev => [...prev, priceList._id]);
         
-        // Adicionar item à lista de itens sendo deletados
-        setDeletingItems(prev => [...prev, priceItem._id]);
+        await apiService.deletePriceList(priceList._id);
         
-        // Fazer a requisição para o backend
-        const response = await apiService.deletePriceListItem(priceItem._id);
-        console.log('Resposta da API:', response);
+        setDeletingItems(prev => prev.filter(id => id !== priceList._id));
+        await loadData();
         
-        if (response.success || response.message) {
-          console.log('Item deletado com sucesso no backend');
-          
-          // Remover item da lista de itens sendo deletados
-          setDeletingItems(prev => prev.filter(id => id !== priceItem._id));
-          
-          // Forçar recarregamento imediato dos dados
-          console.log('Recarregando dados imediatamente...');
-          await loadData();
-          
-          // Mostrar mensagem de sucesso
-          alert('Item excluído com sucesso!');
-        } else {
-          throw new Error('Resposta inválida da API');
-        }
+        alert('Lista de preços excluída com sucesso!');
       } catch (err) {
-        console.error('Erro ao excluir item:', err);
-        alert(`Erro ao excluir item: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
-        
-        // Remover item da lista de itens sendo deletados em caso de erro
-        setDeletingItems(prev => prev.filter(id => id !== priceItem._id));
+        console.error('Erro ao excluir lista:', err);
+        alert(`Erro ao excluir lista: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+        setDeletingItems(prev => prev.filter(id => id !== priceList._id));
       }
     }
   };
 
-  const handleSavePriceItem = async (priceItem: PriceListItem) => {
+  const handleSavePriceList = async () => {
     try {
-      console.log('Salvando item:', priceItem);
-      
-      if (editingPriceItem) {
-        // Editando item existente
-        console.log('Editando item existente');
-        await apiService.updatePriceListItem(priceItem._id, priceItem);
-        console.log('Item editado com sucesso');
-      } else {
-        // Criando novo item
-        console.log('Criando novo item');
-        await apiService.createPriceListItem({
-          distributor: priceItem.distributor._id,
-          product: priceItem.product._id,
-          pricing: priceItem.pricing,
-          isActive: priceItem.isActive,
-          validFrom: priceItem.validFrom,
-          validUntil: priceItem.validUntil,
-          notes: priceItem.notes
+      if (!selectedDistributor || selectedProducts.length === 0) {
+        alert('Selecione um distribuidor e pelo menos um produto');
+        return;
+      }
+
+      const priceListData = {
+        distributorId: selectedDistributor,
+        products: selectedProducts
+      };
+
+      if (editingPriceList) {
+        // Para atualizar, precisamos usar uma abordagem diferente
+        // já que a API atual não suporta PUT para listas completas
+        await apiService.customRequest(`/price-list/${editingPriceList._id}`, {
+          method: 'PUT',
+          body: JSON.stringify(priceListData)
         });
-        console.log('Item criado com sucesso');
+        alert('Lista de preços atualizada com sucesso!');
+      } else {
+        await apiService.customRequest('/price-list', {
+          method: 'POST',
+          body: JSON.stringify(priceListData)
+        });
+        alert('Lista de preços criada com sucesso!');
       }
       
-      // Recarregar os dados para mostrar as mudanças
-      loadData();
+      await loadData();
       setShowModal(false);
     } catch (err) {
-      console.error('Erro ao salvar item:', err);
-      alert(`Erro ao salvar item: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+      console.error('Erro ao salvar lista:', err);
+      alert(`Erro ao salvar lista: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
     }
+  };
+
+  const addProduct = () => {
+    if (products.length > 0) {
+      setSelectedProducts(prev => [...prev, {
+        productId: products[0]._id,
+        productName: products[0].name,
+        pricing: {
+          aVista: 0,
+          cartao: 0,
+          boleto: 0
+        },
+        isActive: true,
+        validFrom: new Date().toISOString().split('T')[0],
+        validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        notes: ''
+      }]);
+    }
+  };
+
+  const removeProduct = (index: number) => {
+    setSelectedProducts(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateProduct = (index: number, field: string, value: any) => {
+    setSelectedProducts(prev => prev.map((product, i) => {
+      if (i === index) {
+        if (field.startsWith('pricing.')) {
+          const pricingField = field.split('.')[1];
+          return {
+            ...product,
+            pricing: {
+              ...product.pricing,
+              [pricingField]: value
+            }
+          };
+        } else {
+          return { ...product, [field]: value };
+        }
+      }
+      return product;
+    }));
   };
 
   const formatCurrency = (value: number) => {
@@ -216,27 +239,74 @@ export const PriceList: React.FC = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const toggleGroup = (distributorId: string) => {
-    setExpandedGroups(prev => {
-      const newExpanded = new Set(prev);
-      if (newExpanded.has(distributorId)) {
-        newExpanded.delete(distributorId);
-      } else {
-        newExpanded.add(distributorId);
-      }
-      return newExpanded;
+  const exportToCSV = () => {
+    const csvData = [];
+    
+    // Cabeçalho
+    csvData.push([
+      'Distribuidor',
+      'Razão Social',
+      'Contato',
+      'Telefone',
+      'Produto',
+      'Categoria',
+      'À Vista',
+      '3x Cartão',
+      '3x Boleto',
+      'Status',
+      'Válido De',
+      'Válido Até',
+      'Observações',
+      'Data Criação'
+    ]);
+
+    // Dados
+    priceLists.forEach(priceList => {
+      priceList.products.forEach(product => {
+        csvData.push([
+          priceList.distributor.apelido,
+          priceList.distributor.razaoSocial,
+          priceList.distributor.contato.nome,
+          priceList.distributor.contato.telefone,
+          product.product.name,
+          product.product.category,
+          formatCurrency(product.pricing.aVista),
+          formatCurrency(product.pricing.cartao),
+          formatCurrency(product.pricing.boleto),
+          product.isActive ? 'Ativo' : 'Inativo',
+          formatDate(product.validFrom),
+          formatDate(product.validUntil),
+          product.notes || '',
+          formatDate(priceList.createdAt)
+        ]);
+      });
     });
+
+    // Converter para CSV
+    const csvContent = csvData.map(row => 
+      row.map(field => `"${field}"`).join(',')
+    ).join('\n');
+
+    // Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `lista_precos_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  const filteredPriceList = priceList.filter(group => {
+  const filteredPriceLists = priceLists.filter(priceList => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
-      group.distributor?.apelido?.toLowerCase().includes(search) ||
-      group.distributor?.razaoSocial?.toLowerCase().includes(search) ||
-      group.products.some(product => 
-        product.product?.name?.toLowerCase().includes(search) ||
-        product.product?.description?.toLowerCase().includes(search)
+      priceList.distributor?.apelido?.toLowerCase().includes(search) ||
+      priceList.distributor?.razaoSocial?.toLowerCase().includes(search) ||
+      priceList.products.some(product => 
+        product.product?.name?.toLowerCase().includes(search)
       )
     );
   });
@@ -249,12 +319,8 @@ export const PriceList: React.FC = () => {
           <Actions>
             <SearchContainer>
               <Search size={20} />
-              <SearchInput placeholder="Pesquisar preços..." disabled />
+              <SearchInput placeholder="Pesquisar listas..." disabled />
             </SearchContainer>
-            <FilterButton disabled>
-              <Filter size={20} />
-              Filtros
-            </FilterButton>
             <CreateButton disabled>
               <Plus size={20} />
               Nova Lista
@@ -264,7 +330,7 @@ export const PriceList: React.FC = () => {
         <Content>
           <LoadingState>
             <Loader2 size={32} />
-            <p>Carregando lista de preços...</p>
+            <p>Carregando listas de preços...</p>
           </LoadingState>
         </Content>
       </Container>
@@ -279,12 +345,8 @@ export const PriceList: React.FC = () => {
           <Actions>
             <SearchContainer>
               <Search size={20} />
-              <SearchInput placeholder="Pesquisar preços..." disabled />
+              <SearchInput placeholder="Pesquisar listas..." disabled />
             </SearchContainer>
-            <FilterButton disabled>
-              <Filter size={20} />
-              Filtros
-            </FilterButton>
             <CreateButton disabled>
               <Plus size={20} />
               Nova Lista
@@ -309,15 +371,15 @@ export const PriceList: React.FC = () => {
           <SearchContainer>
             <Search size={20} />
             <SearchInput 
-              placeholder="Pesquisar preços..." 
+              placeholder="Pesquisar listas..." 
               value={searchTerm}
               onChange={handleSearch}
             />
           </SearchContainer>
-          <FilterButton>
-            <Filter size={20} />
-            Filtros
-          </FilterButton>
+          <CreateButton onClick={exportToCSV} style={{ backgroundColor: '#10b981', marginRight: '0.5rem' }}>
+            <Download size={20} />
+            Exportar CSV
+          </CreateButton>
             <CreateButton onClick={handleCreatePriceList}>
               <Plus size={20} />
               Nova Lista de Preços
@@ -326,10 +388,10 @@ export const PriceList: React.FC = () => {
       </Header>
       
       <Content>
-        {filteredPriceList.length === 0 ? (
+        {filteredPriceLists.length === 0 ? (
           <EmptyState>
             <DollarSign size={48} />
-            <h3>Nenhum preço encontrado</h3>
+            <h3>Nenhuma lista de preços encontrada</h3>
             <p>Comece criando sua primeira lista de preços</p>
             <CreateButton onClick={handleCreatePriceList}>
               <Plus size={20} />
@@ -337,104 +399,214 @@ export const PriceList: React.FC = () => {
             </CreateButton>
           </EmptyState>
         ) : (
-          <div>
-            {filteredPriceList.map((group, groupIndex) => {
-              console.log(`Renderizando grupo ${groupIndex}:`, group);
-              const distributorId = group.distributor._id.toString();
-              const isExpanded = expandedGroups.has(distributorId);
-              
-              return (
-                <DistributorGroup key={distributorId}>
-                  <DistributorHeader onClick={() => toggleGroup(distributorId)}>
-                    <DistributorInfo>
-                      <DistributorName>{group.distributor.apelido || 'N/A'}</DistributorName>
-                      <DistributorDetails>{group.distributor.razaoSocial || 'N/A'}</DistributorDetails>
-                    </DistributorInfo>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <ProductCount>{group.products.length} produto{group.products.length !== 1 ? 's' : ''}</ProductCount>
-                      <ToggleButton>
-                        {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                      </ToggleButton>
+          <TableWrapper>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableCell>Distribuidor</TableCell>
+                  <TableCell>Razão Social</TableCell>
+                  <TableCell>Contato</TableCell>
+                  <TableCell>Telefone</TableCell>
+                  <TableCell>Produto</TableCell>
+                  <TableCell>Categoria</TableCell>
+                  <TableCell>À Vista</TableCell>
+                  <TableCell>3x Cartão</TableCell>
+                  <TableCell>3x Boleto</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Válido De</TableCell>
+                  <TableCell>Válido Até</TableCell>
+                  <TableCell>Observações</TableCell>
+                  <TableCell>Ações</TableCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPriceLists.map((priceList) => {
+                  const isDeleting = deletingItems.includes(priceList._id);
+                  return priceList.products.map((product, productIndex) => (
+                    <TableRow key={`${priceList._id}-${product._id}`} style={{ opacity: isDeleting ? 0.5 : 1 }}>
+                      <TableCell>
+                        <div style={{ fontWeight: 'bold' }}>{priceList.distributor.apelido}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontSize: '0.875rem' }}>{priceList.distributor.razaoSocial}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontSize: '0.875rem' }}>{priceList.distributor.contato.nome}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontSize: '0.875rem' }}>{priceList.distributor.contato.telefone}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontWeight: 'bold' }}>{product.product.name}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontSize: '0.875rem', color: '#666' }}>{product.product.category}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontWeight: 'bold', color: '#10b981' }}>
+                          {formatCurrency(product.pricing.aVista)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontWeight: 'bold', color: '#3b82f6' }}>
+                          {formatCurrency(product.pricing.cartao)}
                     </div>
-                  </DistributorHeader>
-                  
-                  {isExpanded && (
-                    <ProductsList>
-                      {group.products.map((product) => {
-                        const isDeleting = deletingItems.includes(product._id);
-                        return (
-                          <ProductRow key={product._id} style={{ opacity: isDeleting ? 0.5 : 1 }}>
-                            <ProductInfo>
-                              <ProductName>{product.product?.name || 'N/A'}</ProductName>
-                              {product.product?.description && (
-                                <ProductDescription>{product.product.description}</ProductDescription>
-                              )}
-                            </ProductInfo>
-                          
-                          <PricingInfo>
-                            {product.pricing?.aVista > 0 && (
-                              <PriceItem>
-                                <PriceLabel $color="#10b981">À Vista:</PriceLabel>
-                                <PriceValue>{formatCurrency(product.pricing.aVista)}</PriceValue>
-                              </PriceItem>
-                            )}
-                            {product.pricing?.tresXBoleto > 0 && (
-                              <PriceItem>
-                                <PriceLabel $color="#3b82f6">3x Boleto:</PriceLabel>
-                                <PriceValue>{formatCurrency(product.pricing.tresXBoleto)}</PriceValue>
-                              </PriceItem>
-                            )}
-                            {product.pricing?.tresXCartao > 0 && (
-                              <PriceItem>
-                                <PriceLabel $color="#8b5cf6">3x Cartão:</PriceLabel>
-                                <PriceValue>{formatCurrency(product.pricing.tresXCartao)}</PriceValue>
-                              </PriceItem>
-                            )}
-                          </PricingInfo>
-                          
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-                            <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                              {product.validUntil ? formatDate(product.validUntil) : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontWeight: 'bold', color: '#8b5cf6' }}>
+                          {formatCurrency(product.pricing.boleto)}
                             </div>
+                      </TableCell>
+                      <TableCell>
                             <StatusBadge $isActive={product.isActive}>
                               {product.isActive ? 'Ativo' : 'Inativo'}
                             </StatusBadge>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontSize: '0.875rem' }}>{formatDate(product.validFrom)}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontSize: '0.875rem' }}>{formatDate(product.validUntil)}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontSize: '0.875rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {product.notes || '-'}
                           </div>
-                          
-                          <ProductActions>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          {productIndex === 0 && (
+                            <>
                             <ActionButton 
-                              onClick={() => handleEditPriceItem(product)}
+                                onClick={() => handleEditPriceList(priceList)}
                               disabled={isDeleting}
+                                title="Editar Lista"
                             >
                               <Edit size={16} />
                             </ActionButton>
                             <ActionButton 
-                              onClick={() => handleDeletePriceItem(product)}
+                                onClick={() => handleDeletePriceList(priceList)}
                               disabled={isDeleting}
+                                title="Excluir Lista"
                             >
                               {isDeleting ? <Loader2 size={16} /> : <Trash2 size={16} />}
                             </ActionButton>
-                          </ProductActions>
-                        </ProductRow>
-                        );
-                      })}
-                    </ProductsList>
-                  )}
-                </DistributorGroup>
-              );
-            })}
-          </div>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ));
+                })}
+              </TableBody>
+            </Table>
+          </TableWrapper>
         )}
       </Content>
 
-      <PriceListModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSave={handleSavePriceItem}
-        distributors={distributors}
-        products={products}
-        priceItem={editingPriceItem}
-      />
+      {/* Modal para criar/editar lista de preços */}
+      {showModal && (
+        <Modal>
+          <ModalContent>
+            <ModalHeader>
+              <ModalTitle>
+                {editingPriceList ? 'Editar Lista de Preços' : 'Nova Lista de Preços'}
+              </ModalTitle>
+            </ModalHeader>
+            <ModalBody>
+              <FormGroup>
+                <Label>Distribuidor *</Label>
+                <Select
+                  value={selectedDistributor}
+                  onChange={(e) => setSelectedDistributor(e.target.value)}
+                >
+                  <option value="">Selecione um distribuidor</option>
+                  {distributors.map(distributor => (
+                    <option key={distributor._id} value={distributor._id}>
+                      {distributor.apelido} - {distributor.razaoSocial}
+                    </option>
+                  ))}
+                </Select>
+              </FormGroup>
+
+              <div style={{ marginTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <Label>Produtos e Preços *</Label>
+                  <AddProductButton onClick={addProduct}>
+                    <Plus size={16} />
+                    Adicionar Produto
+                  </AddProductButton>
+                </div>
+
+                {selectedProducts.map((product, index) => (
+                  <ProductItem key={index}>
+                    <ProductHeader>
+                      <ProductName>
+                        <Select
+                          value={product.productId}
+                          onChange={(e) => {
+                            const selectedProduct = products.find(p => p._id === e.target.value);
+                            if (selectedProduct) {
+                              updateProduct(index, 'productId', selectedProduct._id);
+                              updateProduct(index, 'productName', selectedProduct.name);
+                            }
+                          }}
+                        >
+                          <option value="">Selecione um produto</option>
+                          {products.map(p => (
+                            <option key={p._id} value={p._id}>{p.name}</option>
+                          ))}
+                        </Select>
+                      </ProductName>
+                      <RemoveButton onClick={() => removeProduct(index)}>
+                        <Trash2 size={16} />
+                      </RemoveButton>
+                    </ProductHeader>
+
+                    <ProductPricing>
+                      <PriceRow>
+                        <PriceLabel>À Vista:</PriceLabel>
+                        <PriceInput
+                          type="number"
+                          step="0.01"
+                          value={product.pricing.aVista}
+                          onChange={(e) => updateProduct(index, 'pricing.aVista', parseFloat(e.target.value) || 0)}
+                        />
+                      </PriceRow>
+                      <PriceRow>
+                        <PriceLabel>Cartão (3x):</PriceLabel>
+                        <PriceInput
+                          type="number"
+                          step="0.01"
+                          value={product.pricing.cartao}
+                          onChange={(e) => updateProduct(index, 'pricing.cartao', parseFloat(e.target.value) || 0)}
+                        />
+                      </PriceRow>
+                      <PriceRow>
+                        <PriceLabel>Boleto (3x):</PriceLabel>
+                        <PriceInput
+                          type="number"
+                          step="0.01"
+                          value={product.pricing.boleto}
+                          onChange={(e) => updateProduct(index, 'pricing.boleto', parseFloat(e.target.value) || 0)}
+                        />
+                      </PriceRow>
+                    </ProductPricing>
+                  </ProductItem>
+                ))}
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button onClick={() => setShowModal(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSavePriceList} style={{ backgroundColor: '#3b82f6' }}>
+                {editingPriceList ? 'Atualizar' : 'Criar'} Lista
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
     </Container>
   );
 };

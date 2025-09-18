@@ -3,7 +3,7 @@ import { DefaultTheme } from 'styled-components';
 export const theme: DefaultTheme = {
   colors: {
     // Cores principais - Tema escuro elegante
-    primary: '#00d4aa',
+    primary: '#3b82f6',
     secondary: '#8b5cf6',
     accent: '#f59e0b',
     
@@ -28,14 +28,14 @@ export const theme: DefaultTheme = {
       disabled: 'rgba(255, 255, 255, 0.35)',
       tertiary: 'rgba(255, 255, 255, 0.55)',
       inverse: '#000000',
-      accent: '#00d4aa',
+      accent: '#3b82f6',
     },
     
     // Bordas - Sutis e elegantes
     border: {
       primary: 'rgba(255, 255, 255, 0.08)',
       secondary: 'rgba(255, 255, 255, 0.15)',
-      focus: 'rgba(0, 212, 170, 0.6)',
+      focus: 'rgba(59, 130, 246, 0.6)',
       accent: 'rgba(139, 92, 246, 0.3)',
     },
     
@@ -55,18 +55,18 @@ export const theme: DefaultTheme = {
     
     // Gradientes - Sofisticados e modernos
     gradients: {
-      primary: 'linear-gradient(135deg, #00d4aa 0%, #8b5cf6 50%, #f59e0b 100%)',
+      primary: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #f59e0b 100%)',
       background: 'linear-gradient(135deg, #0a0a0f 0%, #111827 50%, #1f2937 100%)',
       card: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
-      button: 'linear-gradient(135deg, #00d4aa 0%, #059669 100%)',
+      button: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
       buttonSecondary: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
       glass: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-      glow: 'linear-gradient(135deg, rgba(0, 212, 170, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
+      glow: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
     },
     
     // Cores de hover e interação
     hover: {
-      primary: 'rgba(0, 212, 170, 0.1)',
+      primary: 'rgba(59, 130, 246, 0.1)',
       secondary: 'rgba(139, 92, 246, 0.1)',
       danger: 'rgba(239, 68, 68, 0.1)',
       success: 'rgba(16, 185, 129, 0.1)',
@@ -78,7 +78,7 @@ export const theme: DefaultTheme = {
     small: '0 2px 8px rgba(0, 0, 0, 0.3)',
     medium: '0 4px 20px rgba(0, 0, 0, 0.4)',
     large: '0 8px 40px rgba(0, 0, 0, 0.5)',
-    glow: '0 0 30px rgba(0, 212, 170, 0.4)',
+    glow: '0 0 30px rgba(59, 130, 246, 0.4)',
     glowSecondary: '0 0 30px rgba(139, 92, 246, 0.4)',
     inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
   },

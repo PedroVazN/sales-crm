@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Bell, Search, User, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { apiService } from '../../services/api';
-import { useAuth } from '../../App';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Container, 
   SearchContainer, 
@@ -18,12 +17,10 @@ import {
 export const Header: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
-  const currentUser = apiService.getCurrentUser();
-  const { setIsAuthenticated } = useAuth();
+  const { user, logout } = useAuth();
 
-  const handleLogout = async () => {
-    await apiService.logout();
-    setIsAuthenticated(false); // Atualizar estado de autenticação
+  const handleLogout = () => {
+    logout();
     navigate('/login');
   };
 
@@ -42,7 +39,10 @@ export const Header: React.FC = () => {
         
         <UserButton onClick={() => setShowUserMenu(!showUserMenu)}>
           <User size={20} />
-          <span>{currentUser?.name || 'Usuário'}</span>
+          <span>{user?.name || 'Usuário'}</span>
+          <span style={{ fontSize: '12px', opacity: 0.7 }}>
+            ({user?.role === 'admin' ? 'Administrador' : 'Vendedor'})
+          </span>
           {showUserMenu && (
             <UserMenu>
               <UserMenuItem onClick={handleLogout}>

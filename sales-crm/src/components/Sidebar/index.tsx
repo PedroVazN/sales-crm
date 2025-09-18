@@ -16,6 +16,7 @@ import {
   FileSpreadsheet,
   DollarSign
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Container, 
   Logo, 
@@ -49,48 +50,54 @@ const MenuItemComponent: React.FC<MenuItemProps> = ({ icon, label, path, isActiv
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
+  const { user, hasPermission } = useAuth();
 
   const menuItems = [
     {
       title: 'PRINCIPAL',
       items: [
-        { icon: <BarChart3 size={20} />, label: 'Dashboard', path: '/' },
-        { icon: <Users size={20} />, label: 'Leads', path: '/leads' },
-        { icon: <TrendingUp size={20} />, label: 'Vendas', path: '/sales' },
-        { icon: <FileText size={20} />, label: 'Relatórios', path: '/reports' },
-        { icon: <Target size={20} />, label: 'Metas', path: '/goals' },
+        { icon: <BarChart3 size={20} />, label: 'Dashboard', path: '/', permission: 'dashboard' },
+        ...(hasPermission('admin') ? [
+          { icon: <Users size={20} />, label: 'Leads', path: '/leads', permission: 'admin' },
+          { icon: <TrendingUp size={20} />, label: 'Vendas', path: '/sales', permission: 'admin' },
+          { icon: <FileText size={20} />, label: 'Relatórios', path: '/reports', permission: 'admin' },
+          { icon: <Target size={20} />, label: 'Metas', path: '/goals', permission: 'admin' },
+        ] : [])
       ]
     },
-    {
+    ...(hasPermission('admin') ? [{
       title: 'ANÁLISE',
       items: [
-        { icon: <Activity size={20} />, label: 'Performance', path: '/performance' },
-        { icon: <BarChart3 size={20} />, label: 'Análise', path: '/analysis' },
-        { icon: <Calendar size={20} />, label: 'Calendário', path: '/calendar' },
+        { icon: <Activity size={20} />, label: 'Performance', path: '/performance', permission: 'admin' },
+        { icon: <BarChart3 size={20} />, label: 'Análise', path: '/analysis', permission: 'admin' },
+        { icon: <Calendar size={20} />, label: 'Calendário', path: '/calendar', permission: 'admin' },
       ]
-    },
+    }] : []),
     {
       title: 'GESTÃO',
       items: [
-        { icon: <Package size={20} />, label: 'Produtos', path: '/products' },
-        { icon: <UserCheck size={20} />, label: 'Clientes', path: '/clients' },
-        { icon: <Truck size={20} />, label: 'Distribuidores', path: '/distributors' },
-        { icon: <DollarSign size={20} />, label: 'Lista de Preços', path: '/proposals' },
+        ...(hasPermission('admin') ? [
+          { icon: <Package size={20} />, label: 'Produtos', path: '/products', permission: 'admin' },
+          { icon: <UserCheck size={20} />, label: 'Clientes', path: '/clients', permission: 'admin' },
+          { icon: <Truck size={20} />, label: 'Distribuidores', path: '/distributors', permission: 'admin' },
+          { icon: <DollarSign size={20} />, label: 'Lista de Preços', path: '/price-list', permission: 'admin' },
+        ] : []),
+        { icon: <FileSpreadsheet size={20} />, label: 'Propostas', path: '/proposals', permission: 'proposals' },
       ]
     },
-    {
+    ...(hasPermission('admin') ? [{
       title: 'SISTEMA',
       items: [
-        { icon: <Bell size={20} />, label: 'Notificações', path: '/notifications' },
-        { icon: <Settings size={20} />, label: 'Configurações', path: '/configurations' },
+        { icon: <Bell size={20} />, label: 'Notificações', path: '/notifications', permission: 'admin' },
+        { icon: <Settings size={20} />, label: 'Configurações', path: '/configurations', permission: 'admin' },
       ]
-    }
+    }] : [])
   ];
 
   return (
     <Container>
       <Logo>
-        <h1>SellOne</h1>
+        <h1>Sell.On</h1>
         <span>CRM</span>
       </Logo>
       

@@ -15,7 +15,7 @@ export const Container = styled.div`
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
       radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
       radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
     pointer-events: none;
@@ -31,7 +31,7 @@ export const Container = styled.div`
     bottom: 0;
     background: 
       linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.01) 50%, transparent 70%),
-      linear-gradient(-45deg, transparent 30%, rgba(0, 212, 170, 0.02) 50%, transparent 70%);
+      linear-gradient(-45deg, transparent 30%, rgba(59, 130, 246, 0.02) 50%, transparent 70%);
     pointer-events: none;
     animation: shimmer 15s ease-in-out infinite;
   }
@@ -61,13 +61,8 @@ export const Header = styled.div`
 export const Title = styled.h1`
   font-size: 3rem;
   font-weight: 900;
-  background: ${({ theme }) => theme.colors.gradients.primary};
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
-  text-shadow: 0 0 40px rgba(0, 212, 170, 0.4);
-  animation: glow 3s ease-in-out infinite alternate;
   letter-spacing: -2px;
   position: relative;
   
@@ -78,23 +73,8 @@ export const Title = styled.h1`
     left: 0;
     width: 120px;
     height: 4px;
-    background: ${({ theme }) => theme.colors.gradients.primary};
+    background: ${({ theme }) => theme.colors.primary};
     border-radius: 4px;
-    animation: expand 1.2s ease-out 0.8s both;
-  }
-
-  @keyframes glow {
-    0%, 100% { 
-      filter: drop-shadow(0 0 20px rgba(0, 212, 170, 0.3)) drop-shadow(0 0 40px rgba(139, 92, 246, 0.2)); 
-    }
-    50% { 
-      filter: drop-shadow(0 0 30px rgba(0, 212, 170, 0.6)) drop-shadow(0 0 60px rgba(139, 92, 246, 0.4)); 
-    }
-  }
-
-  @keyframes expand {
-    from { width: 0; }
-    to { width: 120px; }
   }
 `;
 

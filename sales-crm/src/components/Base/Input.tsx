@@ -25,7 +25,7 @@ export const Input = styled.input<{ $hasError?: boolean }>`
     };
     background: ${theme.colors.background.cardHover};
     box-shadow: 0 0 0 3px ${({ $hasError }) => 
-      $hasError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0, 212, 170, 0.1)'
+      $hasError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)'
     };
   }
 
@@ -62,7 +62,7 @@ export const Textarea = styled.textarea<{ $hasError?: boolean }>`
     };
     background: ${theme.colors.background.cardHover};
     box-shadow: 0 0 0 3px ${({ $hasError }) => 
-      $hasError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0, 212, 170, 0.1)'
+      $hasError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)'
     };
   }
 
@@ -98,7 +98,7 @@ export const Select = styled.select<{ $hasError?: boolean }>`
     };
     background: ${theme.colors.background.cardHover};
     box-shadow: 0 0 0 3px ${({ $hasError }) => 
-      $hasError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(0, 212, 170, 0.1)'
+      $hasError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)'
     };
   }
 
@@ -158,7 +158,7 @@ export const SearchInput = styled.div`
       outline: none;
       border-color: ${theme.colors.border.focus};
       background: ${theme.colors.background.cardHover};
-      box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
   }
 

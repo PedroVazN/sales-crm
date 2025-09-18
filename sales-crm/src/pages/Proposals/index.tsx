@@ -1,140 +1,293 @@
-import React, { useState, useEffect } from 'react';
-import { apiService, PriceListItem, Distributor, Product } from '../../services/api';
-import { PriceListModal } from '../../components/PriceListModal/index';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Search, Edit, Trash2, Eye, FileText, CheckCircle, XCircle, Clock, AlertCircle, Download } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { apiService, Proposal, Product, Distributor, User as UserType } from '../../services/api';
+import { generateProposalPdf, ProposalPdfData } from '../../utils/pdfGenerator';
 import { 
-  PageContainer, 
-  PageHeader, 
-  PageTitle, 
-  PageSubtitle, 
-  PageContent 
-} from '../../components/Base/PageContainer';
-import { Button, IconButton } from '../../components/Base/Button';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/Base/Card';
-import { SearchInput, Select } from '../../components/Base/Input';
-import { 
-  ActionsBar,
-  PriceListGrid,
-  PriceListCard,
-  PriceListHeader,
-  PriceListDistributor,
-  PriceListProduct,
-  PriceListPricing,
-  PricingItem,
-  PriceListStatus,
-  PriceListActions,
+  Container, 
+  Header, 
+  Title, 
+  Actions, 
+  SearchContainer, 
+  SearchInput, 
+  CreateButton, 
+  Content,
+  TableWrapper,
+  Table,
+  TableHeader,
+  TableRow,
+  TableCell,
+  TableBody,
+  ActionButton,
+  StatusBadge,
   EmptyState,
-  LoadingContainer
+  LoadingState,
+  ErrorState,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalBody,
+  ModalFooter,
+  FormGroup,
+  Label,
+  Select,
+  Input,
+  Button,
+  ProductItem,
+  ProductHeader,
+  ProductName,
+  ProductDetails,
+  PriceRow,
+  PriceLabel,
+  PriceInput,
+  RemoveButton,
+  AddProductButton,
+  TotalRow,
+  TotalLabel,
+  TotalValue
 } from './styles';
-import { Plus, Search, Eye, Edit, Trash2, Building2, Package, Loader2 } from 'lucide-react';
 
-const statusOptions = [
-  { value: '', label: 'Todos os status' },
-  { value: 'true', label: 'Ativo' },
-  { value: 'false', label: 'Inativo' }
-];
-
-export const PriceList: React.FC = () => {
-  const [priceList, setPriceList] = useState<PriceListItem[]>([]);
-  const [distributors, setDistributors] = useState<Distributor[]>([]);
+export const Proposals: React.FC = () => {
+  const navigate = useNavigate();
+  const [proposals, setProposals] = useState<Proposal[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [distributors, setDistributors] = useState<Distributor[]>([]);
+  const [sellers, setSellers] = useState<UserType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [distributorFilter, setDistributorFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingProposal, setEditingProposal] = useState<Proposal | null>(null);
+  const [deletingItems, setDeletingItems] = useState<string[]>([]);
+
+  // Form states
+  const [selectedClient, setSelectedClient] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: ''
+  });
+  const [selectedSeller, setSelectedSeller] = useState('');
+  const [selectedDistributor, setSelectedDistributor] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<{
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    discount: number;
+    total: number;
+  }[]>([]);
+  const [paymentCondition, setPaymentCondition] = useState('');
+  const [observations, setObservations] = useState('');
+  const [validUntil, setValidUntil] = useState('');
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [proposalsRes, productsRes, distributorsRes, sellersRes] = await Promise.all([
+        apiService.getProposals(1, 100, statusFilter || undefined, searchTerm || undefined),
+        apiService.getProducts(1, 100),
+        apiService.getDistributors(1, 100),
+        apiService.getUsers(1, 100)
+      ]);
+
+      setProposals(proposalsRes.data);
+      setProducts(productsRes.data);
+      setDistributors(distributorsRes.data);
+      setSellers(sellersRes.data.filter(user => user.role === 'vendedor' || user.role === 'admin'));
+    } catch (err) {
+      console.error('Erro ao carregar dados:', err);
+      setError('Erro ao carregar dados');
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, statusFilter]);
 
   useEffect(() => {
-    loadPriceList();
-    loadDistributors();
-    loadProducts();
-  }, [currentPage, statusFilter, distributorFilter, searchTerm]);
+    loadData();
+  }, [loadData]);
 
-  const loadPriceList = async () => {
-    try {
-      setIsLoading(true);
-      const response = await apiService.getPriceList(
-        currentPage, 
-        10, 
-        distributorFilter || undefined,
-        undefined,
-        statusFilter ? statusFilter === 'true' : undefined
-      );
-      
-      setPriceList(response.data);
-      setTotalPages(response.pagination?.pages || 1);
-    } catch (error) {
-      console.error('Erro ao carregar lista de preços:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
-  const loadDistributors = async () => {
-    try {
-      const response = await apiService.getDistributors(1, 100);
-      setDistributors(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar distribuidores:', error);
-    }
+  const handleStatusFilter = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(e.target.value);
   };
 
-  const loadProducts = async () => {
-    try {
-      const response = await apiService.getProducts(1, 100);
-      setProducts(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar produtos:', error);
-    }
+  const handleCreateProposal = () => {
+    setEditingProposal(null);
+    setSelectedClient({ name: '', email: '', phone: '', company: '' });
+    setSelectedSeller('');
+    setSelectedDistributor('');
+    setSelectedProducts([]);
+    setPaymentCondition('');
+    setObservations('');
+    setValidUntil(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+    setShowModal(true);
   };
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
+  const handleEditProposal = (proposal: Proposal) => {
+    navigate(`/proposals/edit/${proposal._id}`);
   };
 
-  const handleDistributorFilter = (value: string) => {
-    setDistributorFilter(value);
-    setCurrentPage(1);
-  };
-
-  const handleStatusFilter = (value: string) => {
-    setStatusFilter(value);
-    setCurrentPage(1);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja deletar este item da lista de preços?')) {
+  const handleDeleteProposal = async (proposal: Proposal) => {
+    if (window.confirm(`Tem certeza que deseza excluir a proposta ${proposal.proposalNumber}?`)) {
       try {
-        await apiService.deletePriceListItem(id);
-        loadPriceList();
-      } catch (error) {
-        console.error('Erro ao deletar item:', error);
+        setDeletingItems(prev => [...prev, proposal._id]);
+        await apiService.deleteProposal(proposal._id);
+        setDeletingItems(prev => prev.filter(id => id !== proposal._id));
+        await loadData();
+        alert('Proposta excluída com sucesso!');
+      } catch (err) {
+        console.error('Erro ao deletar proposta:', err);
+        alert(`Erro ao deletar proposta: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
       }
     }
   };
 
-  const handleStatusChange = async (id: string, isActive: boolean) => {
+  const handleGeneratePdf = (proposal: Proposal) => {
     try {
-      await apiService.updatePriceListItem(id, { isActive });
-      loadPriceList();
+      const pdfData: ProposalPdfData = {
+        proposalNumber: proposal.proposalNumber,
+        client: proposal.client,
+        seller: proposal.seller,
+        distributor: proposal.distributor,
+        items: proposal.items.map(item => ({
+          product: {
+            name: item.product.name,
+            description: item.product.description || ''
+          },
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          discount: item.discount,
+          total: item.total
+        })),
+        subtotal: proposal.subtotal,
+        discount: proposal.discount,
+        total: proposal.total,
+        paymentCondition: proposal.paymentCondition,
+        validUntil: proposal.validUntil,
+        observations: proposal.observations || '',
+        status: proposal.status,
+        createdAt: proposal.createdAt
+      };
+      
+      generateProposalPdf(pdfData);
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF');
     }
   };
 
-  const handleCreatePriceItem = () => {
-    setIsModalOpen(true);
+  const handleUpdateStatus = async (proposal: Proposal, newStatus: Proposal['status']) => {
+    try {
+      await apiService.updateProposalStatus(proposal._id, newStatus);
+      await loadData();
+      alert('Status atualizado com sucesso!');
+    } catch (err) {
+      console.error('Erro ao atualizar status:', err);
+      alert(`Erro ao atualizar status: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+    }
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const addProduct = () => {
+    if (products.length > 0) {
+      setSelectedProducts(prev => [...prev, {
+        productId: products[0]._id,
+        productName: products[0].name,
+        quantity: 1,
+        unitPrice: products[0].price,
+        discount: 0,
+        total: products[0].price
+      }]);
+    }
   };
 
-  const handleSavePriceItem = (priceItem: PriceListItem) => {
-    setPriceList(prev => [priceItem, ...prev]);
-    setIsModalOpen(false);
+  const updateProduct = (index: number, field: string, value: any) => {
+    setSelectedProducts(prev => prev.map((product, i) => {
+      if (i === index) {
+        const updated = { ...product, [field]: value };
+        if (field === 'quantity' || field === 'unitPrice' || field === 'discount') {
+          updated.total = updated.quantity * updated.unitPrice * (1 - updated.discount / 100);
+        }
+        return updated;
+      }
+      return product;
+    }));
+  };
+
+  const removeProduct = (index: number) => {
+    setSelectedProducts(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const calculateTotals = () => {
+    const subtotal = selectedProducts.reduce((sum, product) => sum + product.total, 0);
+    const discount = 0; // Pode ser implementado desconto geral
+    const total = subtotal - discount;
+    return { subtotal, discount, total };
+  };
+
+  const handleSaveProposal = async () => {
+    try {
+      if (!selectedClient.name || !selectedSeller || !selectedDistributor || selectedProducts.length === 0) {
+        alert('Preencha todos os campos obrigatórios');
+        return;
+      }
+
+      const { subtotal, discount, total } = calculateTotals();
+      const selectedDistributorData = distributors.find(d => d._id === selectedDistributor);
+      const selectedSellerData = sellers.find(s => s._id === selectedSeller);
+
+      if (!selectedDistributorData || !selectedSellerData) {
+        alert('Distribuidor ou vendedor não encontrado');
+        return;
+      }
+
+      const proposalData = {
+        client: selectedClient,
+        seller: {
+          _id: selectedSellerData._id,
+          name: selectedSellerData.name,
+          email: selectedSellerData.email
+        },
+        distributor: {
+          _id: selectedDistributorData._id,
+          apelido: selectedDistributorData.apelido,
+          razaoSocial: selectedDistributorData.razaoSocial
+        },
+        items: selectedProducts.map(item => ({
+          product: products.find(p => p._id === item.productId)!,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          discount: item.discount,
+          total: item.total
+        })),
+        subtotal,
+        discount,
+        total,
+        paymentCondition,
+        observations,
+        status: 'draft' as const,
+        validUntil: new Date(validUntil).toISOString()
+      };
+
+      if (editingProposal) {
+        await apiService.updateProposal(editingProposal._id, proposalData);
+        alert('Proposta atualizada com sucesso!');
+      } else {
+        await apiService.createProposal(proposalData);
+        alert('Proposta criada com sucesso!');
+      }
+
+      setShowModal(false);
+      await loadData();
+    } catch (err) {
+      console.error('Erro ao salvar proposta:', err);
+      alert(`Erro ao salvar proposta: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -148,167 +301,456 @@ export const PriceList: React.FC = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  if (isLoading) {
+  const getStatusIcon = (status: Proposal['status']) => {
+    switch (status) {
+      case 'draft': return <FileText size={16} />;
+      case 'sent': return <Clock size={16} />;
+      case 'accepted': return <CheckCircle size={16} />;
+      case 'rejected': return <XCircle size={16} />;
+      case 'expired': return <AlertCircle size={16} />;
+      default: return <FileText size={16} />;
+    }
+  };
+
+  const getStatusColor = (status: Proposal['status']) => {
+    switch (status) {
+      case 'draft': return '#6b7280';
+      case 'sent': return '#3b82f6';
+      case 'accepted': return '#10b981';
+      case 'rejected': return '#ef4444';
+      case 'expired': return '#f59e0b';
+      default: return '#6b7280';
+    }
+  };
+
+  const getStatusLabel = (status: Proposal['status']) => {
+    switch (status) {
+      case 'draft': return 'Rascunho';
+      case 'sent': return 'Enviada';
+      case 'accepted': return 'Aceita';
+      case 'rejected': return 'Rejeitada';
+      case 'expired': return 'Expirada';
+      default: return status;
+    }
+  };
+
+  const filteredProposals = proposals.filter(proposal => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
     return (
-      <PageContainer>
-        <LoadingContainer>
-          <Loader2 size={48} className="animate-spin" />
-          <p>Carregando lista de preços...</p>
-        </LoadingContainer>
-      </PageContainer>
+      proposal.proposalNumber.toLowerCase().includes(search) ||
+      proposal.client.name.toLowerCase().includes(search) ||
+      proposal.client.company?.toLowerCase().includes(search) ||
+      proposal.seller.name.toLowerCase().includes(search) ||
+      proposal.distributor.apelido.toLowerCase().includes(search)
+    );
+  });
+
+  if (loading) {
+    return (
+      <Container>
+        <LoadingState>
+          <div>Carregando propostas...</div>
+        </LoadingState>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <ErrorState>
+          <div>{error}</div>
+          <Button onClick={loadData}>Tentar novamente</Button>
+        </ErrorState>
+      </Container>
     );
   }
 
   return (
-    <PageContainer>
-      <PageHeader>
-        <div>
-          <PageTitle>Lista de Preços</PageTitle>
-          <PageSubtitle>Gerencie preços por distribuidor e produto</PageSubtitle>
-        </div>
-        <Button 
-          onClick={handleCreatePriceItem}
-          variant="primary"
-        >
-          <Plus size={20} />
-          Novo Preço
-        </Button>
-      </PageHeader>
-
-      <PageContent>
-        <ActionsBar>
-          <SearchInput>
+    <Container>
+      <Header>
+        <Title>Propostas Comerciais</Title>
+        <Actions>
+          <SearchContainer>
             <Search size={20} />
-            <input
-              placeholder="Buscar por produto..."
+            <SearchInput 
+              placeholder="Pesquisar propostas..." 
               value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={handleSearch}
             />
-          </SearchInput>
-          
-          <Select
-            value={distributorFilter}
-            onChange={(e) => handleDistributorFilter(e.target.value)}
-          >
-            <option value="">Todos os distribuidores</option>
-            {distributors.map(distributor => (
-              <option key={distributor._id} value={distributor._id}>
-                {distributor.apelido} - {distributor.razaoSocial}
-              </option>
-            ))}
+          </SearchContainer>
+          <Select value={statusFilter} onChange={handleStatusFilter} style={{ marginRight: '0.5rem' }}>
+            <option value="">Todos os status</option>
+            <option value="draft">Rascunho</option>
+            <option value="sent">Enviada</option>
+            <option value="accepted">Aceita</option>
+            <option value="rejected">Rejeitada</option>
+            <option value="expired">Expirada</option>
           </Select>
-          
-          <Select
-            value={statusFilter}
-            onChange={(e) => handleStatusFilter(e.target.value)}
-          >
-            {statusOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
-        </ActionsBar>
-
-      {priceList.length === 0 ? (
-        <EmptyState>
-          <div>
-            <h3>Nenhum preço cadastrado</h3>
-            <p>
-              {searchTerm || distributorFilter || statusFilter 
-                ? 'Tente ajustar os filtros de busca' 
-                : 'Cadastre preços por distribuidor e produto'
-              }
-            </p>
-            <Button onClick={handleCreatePriceItem} variant="primary">
+          <CreateButton onClick={() => navigate('/proposals/create')}>
+            <Plus size={20} />
+            Nova Proposta
+          </CreateButton>
+        </Actions>
+      </Header>
+      
+      <Content>
+        {filteredProposals.length === 0 ? (
+          <EmptyState>
+            <FileText size={48} />
+            <h3>Nenhuma proposta encontrada</h3>
+            <p>Crie sua primeira proposta comercial</p>
+            <CreateButton onClick={() => navigate('/proposals/create')}>
               <Plus size={20} />
-              Novo Preço
-            </Button>
-          </div>
-        </EmptyState>
-      ) : (
-        <PriceListGrid>
-          {priceList.map((item) => (
-            <PriceListCard key={item._id}>
-              <PriceListHeader>
-                <PriceListDistributor>
-                  <Building2 size={20} />
-                  <div>
-                    <h4>{item.distributor?.apelido || 'N/A'}</h4>
-                    <span>{item.distributor?.contato?.email || 'N/A'}</span>
-                  </div>
-                </PriceListDistributor>
-                <PriceListStatus $isActive={item.isActive}>
-                  {item.isActive ? 'Ativo' : 'Inativo'}
-                </PriceListStatus>
-              </PriceListHeader>
+              Nova Proposta
+            </CreateButton>
+          </EmptyState>
+        ) : (
+          <TableWrapper>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableCell>Número</TableCell>
+                  <TableCell>Cliente</TableCell>
+                  <TableCell>Vendedor</TableCell>
+                  <TableCell>Distribuidor</TableCell>
+                  <TableCell>Produtos</TableCell>
+                  <TableCell>Total</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Válido Até</TableCell>
+                  <TableCell>Ações</TableCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProposals.map((proposal) => {
+                  const isDeleting = deletingItems.includes(proposal._id);
+                  return (
+                    <TableRow key={proposal._id} style={{ opacity: isDeleting ? 0.5 : 1 }}>
+                      <TableCell>
+                        <div style={{ fontWeight: 'bold' }}>{proposal.proposalNumber}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div style={{ fontWeight: 'bold' }}>{proposal.client.name}</div>
+                          <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                            {proposal.client.company || proposal.client.email}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontSize: '0.875rem' }}>{proposal.seller.name}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div style={{ fontWeight: 'bold' }}>{proposal.distributor.apelido}</div>
+                          <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                            {proposal.distributor.razaoSocial}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          {proposal.items.map((item, index) => (
+                            <div key={index} style={{ marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+                              {item.product.name} x{item.quantity}
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontWeight: 'bold', color: '#10b981' }}>
+                          {formatCurrency(proposal.total)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge 
+                          $isActive={proposal.status === 'accepted'} 
+                          style={{ 
+                            backgroundColor: getStatusColor(proposal.status),
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                          }}
+                        >
+                          {getStatusIcon(proposal.status)}
+                          {getStatusLabel(proposal.status)}
+                        </StatusBadge>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ fontSize: '0.875rem' }}>{formatDate(proposal.validUntil)}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <ActionButton 
+                            onClick={() => handleEditProposal(proposal)}
+                            disabled={isDeleting}
+                            title="Editar"
+                          >
+                            <Edit size={16} />
+                          </ActionButton>
+                          <ActionButton 
+                            onClick={() => handleGeneratePdf(proposal)}
+                            disabled={isDeleting}
+                            title="Gerar PDF"
+                            style={{ backgroundColor: '#059669' }}
+                          >
+                            <Download size={16} />
+                          </ActionButton>
+                          <ActionButton 
+                            onClick={() => handleDeleteProposal(proposal)}
+                            disabled={isDeleting}
+                            title="Excluir"
+                          >
+                            <Trash2 size={16} />
+                          </ActionButton>
+                          {proposal.status === 'draft' && (
+                            <ActionButton 
+                              onClick={() => handleUpdateStatus(proposal, 'sent')}
+                              disabled={isDeleting}
+                              title="Enviar"
+                              style={{ backgroundColor: '#3b82f6' }}
+                            >
+                              <Eye size={16} />
+                            </ActionButton>
+                          )}
+                          {proposal.status === 'sent' && (
+                            <>
+                              <ActionButton 
+                                onClick={() => handleUpdateStatus(proposal, 'accepted')}
+                                disabled={isDeleting}
+                                title="Aceitar"
+                                style={{ backgroundColor: '#10b981' }}
+                              >
+                                <CheckCircle size={16} />
+                              </ActionButton>
+                              <ActionButton 
+                                onClick={() => handleUpdateStatus(proposal, 'rejected')}
+                                disabled={isDeleting}
+                                title="Rejeitar"
+                                style={{ backgroundColor: '#ef4444' }}
+                              >
+                                <XCircle size={16} />
+                              </ActionButton>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableWrapper>
+        )}
+      </Content>
 
-              <PriceListProduct>
-                <Package size={20} />
-                <div>
-                  <h4>{item.product?.name || 'N/A'}</h4>
-                  <span>{item.product?.description || 'N/A'}</span>
+      {/* Modal para criar/editar proposta */}
+      {showModal && (
+        <Modal>
+          <ModalContent>
+            <ModalHeader>
+              <ModalTitle>
+                {editingProposal ? 'Editar Proposta' : 'Nova Proposta'}
+              </ModalTitle>
+            </ModalHeader>
+            <ModalBody>
+              {/* Dados do Cliente */}
+              <FormGroup>
+                <Label>Dados do Cliente *</Label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <Input
+                    placeholder="Nome do cliente"
+                    value={selectedClient.name}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedClient(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="Email"
+                    type="email"
+                    value={selectedClient.email}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedClient(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="Telefone"
+                    value={selectedClient.phone}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedClient(prev => ({ ...prev, phone: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="Empresa"
+                    value={selectedClient.company}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedClient(prev => ({ ...prev, company: e.target.value }))}
+                  />
                 </div>
-              </PriceListProduct>
+              </FormGroup>
 
-              <PriceListPricing>
-                <PricingItem>
-                  <span>A Vista</span>
-                  <strong>{formatCurrency(item.pricing?.aVista || 0)}</strong>
-                </PricingItem>
-                <PricingItem>
-                  <span>3x Boleto</span>
-                  <strong>{formatCurrency(item.pricing?.tresXBoleto || 0)}</strong>
-                </PricingItem>
-                <PricingItem>
-                  <span>3x Cartão</span>
-                  <strong>{formatCurrency(item.pricing?.tresXCartao || 0)}</strong>
-                </PricingItem>
-              </PriceListPricing>
-
-              <PriceListActions>
-                <IconButton
-                  onClick={() => handleStatusChange(item._id, !item.isActive)}
-                  title={item.isActive ? 'Desativar' : 'Ativar'}
-                >
-                  <Eye size={16} />
-                </IconButton>
-                <IconButton
-                  onClick={() => handleDelete(item._id)}
-                  title="Deletar preço"
-                  variant="danger"
-                >
-                  <Trash2 size={16} />
-                </IconButton>
-              </PriceListActions>
-
-              <div style={{ 
-                fontSize: '12px', 
-                color: '#6B7280', 
-                marginTop: '12px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                paddingTop: '8px'
-              }}>
-                Criado em {formatDate(item.createdAt)}
-                {item.validUntil && (
-                  <span> • Válido até {formatDate(item.validUntil)}</span>
-                )}
+              {/* Vendedor e Distribuidor */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <FormGroup>
+                  <Label>Vendedor *</Label>
+                  <Select
+                    value={selectedSeller}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedSeller(e.target.value)}
+                  >
+                    <option value="">Selecione o vendedor</option>
+                    {sellers.map(seller => (
+                      <option key={seller._id} value={seller._id}>
+                        {seller.name}
+                      </option>
+                    ))}
+                  </Select>
+                </FormGroup>
+                <FormGroup>
+                  <Label>Distribuidor *</Label>
+                  <Select
+                    value={selectedDistributor}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedDistributor(e.target.value)}
+                  >
+                    <option value="">Selecione o distribuidor</option>
+                    {distributors.map(distributor => (
+                      <option key={distributor._id} value={distributor._id}>
+                        {distributor.apelido} - {distributor.razaoSocial}
+                      </option>
+                    ))}
+                  </Select>
+                </FormGroup>
               </div>
-            </PriceListCard>
-          ))}
-        </PriceListGrid>
-      )}
 
-      {isModalOpen && (
-        <PriceListModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          onSave={handleSavePriceItem}
-          distributors={distributors}
-          products={products}
-        />
+              {/* Produtos */}
+              <FormGroup>
+                <Label>Produtos *</Label>
+                {selectedProducts.map((product, index) => (
+                  <ProductItem key={index}>
+                    <ProductHeader>
+                      <ProductName>
+                        <Select
+                          value={product.productId}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                            const selectedProduct = products.find(p => p._id === e.target.value);
+                            if (selectedProduct) {
+                              updateProduct(index, 'productId', selectedProduct._id);
+                              updateProduct(index, 'productName', selectedProduct.name);
+                              updateProduct(index, 'unitPrice', selectedProduct.price);
+                            }
+                          }}
+                        >
+                          <option value="">Selecione o produto</option>
+                          {products.map(p => (
+                            <option key={p._id} value={p._id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </Select>
+                      </ProductName>
+                      <RemoveButton onClick={() => removeProduct(index)}>
+                        <Trash2 size={16} />
+                      </RemoveButton>
+                    </ProductHeader>
+                    <ProductDetails>
+                      <PriceRow>
+                        <PriceLabel>Quantidade:</PriceLabel>
+                        <PriceInput
+                          type="number"
+                          min="1"
+                          value={product.quantity}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProduct(index, 'quantity', parseInt(e.target.value) || 1)}
+                        />
+                      </PriceRow>
+                      <PriceRow>
+                        <PriceLabel>Preço Unit.:</PriceLabel>
+                        <PriceInput
+                          type="number"
+                          step="0.01"
+                          value={product.unitPrice}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProduct(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                        />
+                      </PriceRow>
+                      <PriceRow>
+                        <PriceLabel>Desconto (%):</PriceLabel>
+                        <PriceInput
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={product.discount}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProduct(index, 'discount', parseFloat(e.target.value) || 0)}
+                        />
+                      </PriceRow>
+                      <PriceRow>
+                        <PriceLabel>Total:</PriceLabel>
+                        <PriceInput
+                          type="number"
+                          step="0.01"
+                          value={product.total}
+                          readOnly
+                          style={{ backgroundColor: '#f3f4f6' }}
+                        />
+                      </PriceRow>
+                    </ProductDetails>
+                  </ProductItem>
+                ))}
+                <AddProductButton onClick={addProduct}>
+                  <Plus size={16} />
+                  Adicionar Produto
+                </AddProductButton>
+              </FormGroup>
+
+              {/* Totais */}
+              <TotalRow>
+                <TotalLabel>Subtotal:</TotalLabel>
+                <TotalValue>{formatCurrency(calculateTotals().subtotal)}</TotalValue>
+              </TotalRow>
+              <TotalRow>
+                <TotalLabel>Desconto:</TotalLabel>
+                <TotalValue>{formatCurrency(calculateTotals().discount)}</TotalValue>
+              </TotalRow>
+              <TotalRow style={{ borderTop: '2px solid #e5e7eb', fontWeight: 'bold', fontSize: '1.1rem' }}>
+                <TotalLabel>Total:</TotalLabel>
+                <TotalValue style={{ color: '#10b981' }}>{formatCurrency(calculateTotals().total)}</TotalValue>
+              </TotalRow>
+
+              {/* Condições de Pagamento e Observações */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <FormGroup>
+                  <Label>Condição de Pagamento</Label>
+                  <Input
+                    placeholder="Ex: À vista, 30 dias, 3x sem juros"
+                    value={paymentCondition}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentCondition(e.target.value)}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label>Válido Até</Label>
+                  <Input
+                    type="date"
+                    value={validUntil}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValidUntil(e.target.value)}
+                  />
+                </FormGroup>
+              </div>
+
+              <FormGroup>
+                <Label>Observações</Label>
+                <Input
+                  placeholder="Observações adicionais..."
+                  value={observations}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setObservations(e.target.value)}
+                />
+              </FormGroup>
+            </ModalBody>
+            <ModalFooter>
+              <Button onClick={() => setShowModal(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleSaveProposal}
+                style={{ backgroundColor: '#10b981' }}
+              >
+                {editingProposal ? 'Atualizar' : 'Criar'} Proposta
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       )}
-      </PageContent>
-    </PageContainer>
+    </Container>
   );
 };

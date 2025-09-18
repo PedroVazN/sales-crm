@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, LogIn, Loader2 } from 'lucide-react';
-import { apiService } from '../../services/api';
-import { useAuth } from '../../App';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Container, 
   LoginCard, 
@@ -27,7 +26,7 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
-  const { setIsAuthenticated } = useAuth();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,16 +35,15 @@ export const Login: React.FC = () => {
     setSuccess('');
 
     try {
-      const response = await apiService.login({ email, password });
+      const success = await login(email, password);
       
-      if (response.success) {
+      if (success) {
         setSuccess('Login realizado com sucesso!');
-        setIsAuthenticated(true); // Atualizar estado de autenticação
         setTimeout(() => {
           navigate('/');
         }, 1000);
       } else {
-        setError(response.message || 'Erro no login');
+        setError('Email ou senha incorretos');
       }
     } catch (error) {
       setError('Erro de conexão. Verifique se o servidor está rodando.');
@@ -59,7 +57,7 @@ export const Login: React.FC = () => {
     <Container>
       <LoginCard>
         <Logo>
-          <h1>SellOne</h1>
+          <h1>Sell.On</h1>
           <span>CRM</span>
         </Logo>
         

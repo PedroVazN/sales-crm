@@ -1,131 +1,170 @@
-# SellOne - Sistema de Vendas
+# 🚀 Sell.On - Sistema de Gestão de Vendas
 
-Sistema completo de vendas desenvolvido com Node.js, Express e MongoDB.
+Sistema completo de CRM e gestão de vendas com frontend React e backend Node.js.
 
-## 🚀 Funcionalidades
+## 📋 Funcionalidades
 
-- **Gestão de Usuários**: Cadastro, login e controle de acesso por roles
-- **Gestão de Produtos**: CRUD completo com controle de estoque
-- **Gestão de Vendas**: Criação, listagem e controle de vendas
-- **Autenticação**: Sistema seguro com JWT
-- **API RESTful**: Endpoints organizados e documentados
+### 🎯 Dashboard
+- Visão geral das vendas e métricas
+- Gráficos de performance
+- Indicadores de metas
 
-## 📋 Pré-requisitos
+### 👥 Clientes
+- Cadastro completo de clientes
+- Filtros por UF, classificação e status
+- Histórico de interações
 
-- Node.js (versão 14 ou superior)
-- MongoDB (local ou MongoDB Atlas)
-- npm ou yarn
+### 🏢 Distribuidores
+- Gestão de distribuidores
+- Controle de preços e condições
+- Acompanhamento de performance
 
-## 🛠️ Instalação
+### 📦 Produtos
+- Catálogo de produtos
+- Controle de estoque
+- Categorização
 
-1. **Clone o repositório**
+### 💰 Propostas
+- Criação de propostas comerciais
+- Templates personalizáveis
+- Acompanhamento de status
+
+### 📊 Vendas
+- Registro de vendas
+- Relatórios detalhados
+- Análise de performance
+
+### 📋 Lista de Preços
+- Preços por distribuidor
+- Validação de vigência
+- Histórico de alterações
+
+## 🛠️ Tecnologias
+
+### Frontend
+- **React 18** com TypeScript
+- **Styled Components** para estilização
+- **React Router** para navegação
+- **Axios** para requisições HTTP
+
+### Backend
+- **Node.js** com Express
+- **MongoDB** com Mongoose
+- **CORS** para comunicação
+- **JWT** para autenticação
+
+## 🚀 Instalação e Configuração
+
+### Pré-requisitos
+- Node.js 16+ 
+- MongoDB (local ou Atlas)
+- Git
+
+### 1. Clone o repositório
 ```bash
 git clone <url-do-repositorio>
-cd sellone
+cd Sales
 ```
 
-2. **Instale as dependências**
+### 2. Instale as dependências do backend
 ```bash
 npm install
 ```
 
-3. **Configure as variáveis de ambiente**
-Crie um arquivo `.env` na raiz do projeto:
+### 3. Instale as dependências do frontend
+```bash
+cd sales-crm
+npm install
+```
+
+### 4. Configure o banco de dados
+
+#### Opção A: MongoDB Local (Recomendado)
+1. Execute o script de instalação:
+```bash
+.\install-mongodb-local.bat
+```
+2. Siga as instruções na tela
+3. O sistema se conectará automaticamente
+
+#### Opção B: MongoDB Atlas
+1. Crie uma conta no MongoDB Atlas
+2. Crie um cluster
+3. Configure o IP whitelist
+4. Crie um arquivo `.env` com:
 ```env
-MONGODB_URI=mongodb://localhost:27017/sellone
-PORT=3000
-NODE_ENV=development
-JWT_SECRET=sua_chave_secreta_aqui_123456789
+MONGODB_URI=mongodb+srv://usuario:senha@cluster.mongodb.net/sellone
 ```
 
-4. **Inicie o servidor**
+### 5. Execute o sistema
+
+#### Modo Completo (com banco de dados)
 ```bash
-# Desenvolvimento
-npm run dev
-
-# Produção
-npm start
+node complete-server.js
 ```
 
-## 📚 API Endpoints
-
-### Usuários
-- `POST /api/users/register` - Registrar novo usuário
-- `POST /api/users/login` - Login do usuário
-- `GET /api/users` - Listar usuários (Admin)
-- `GET /api/users/:id` - Buscar usuário por ID
-- `PUT /api/users/:id` - Atualizar usuário
-- `DELETE /api/users/:id` - Desativar usuário (Admin)
-
-### Produtos
-- `POST /api/products` - Criar produto (Admin/Vendedor)
-- `GET /api/products` - Listar produtos
-- `GET /api/products/:id` - Buscar produto por ID
-- `PUT /api/products/:id` - Atualizar produto (Admin/Vendedor)
-- `DELETE /api/products/:id` - Desativar produto (Admin)
-- `PUT /api/products/:id/stock` - Atualizar estoque (Admin/Vendedor)
-- `GET /api/products/categories/list` - Listar categorias
-
-### Vendas
-- `POST /api/sales` - Criar venda (Admin/Vendedor)
-- `GET /api/sales` - Listar vendas
-- `GET /api/sales/:id` - Buscar venda por ID
-- `PUT /api/sales/:id/status` - Atualizar status da venda (Admin/Vendedor)
-- `GET /api/sales/stats/summary` - Estatísticas de vendas (Admin/Vendedor)
-
-## 🔐 Autenticação
-
-O sistema usa JWT para autenticação. Inclua o token no header:
-```
-Authorization: Bearer <seu_token>
-```
-
-## 👥 Roles de Usuário
-
-- **admin**: Acesso total ao sistema
-- **vendedor**: Pode gerenciar produtos e vendas
-- **cliente**: Pode visualizar produtos e suas próprias vendas
-
-## 🗄️ Estrutura do Banco de Dados
-
-### Collections:
-- **users**: Dados dos usuários
-- **products**: Catálogo de produtos
-- **sales**: Registro de vendas
-
-## 🧪 Testando a API
-
-Você pode usar ferramentas como Postman, Insomnia ou curl para testar os endpoints.
-
-### Exemplo de registro de usuário:
+#### Modo Demo (sem banco de dados)
 ```bash
-curl -X POST http://localhost:3000/api/users/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "João Silva",
-    "email": "joao@email.com",
-    "password": "123456",
-    "role": "admin"
-  }'
+node demo-server.js
 ```
 
-## 📊 Próximos Passos
+## 🌐 Acesso
 
-- [ ] Interface web (Frontend)
-- [ ] Relatórios avançados
-- [ ] Integração com gateway de pagamento
-- [ ] Sistema de notificações
-- [ ] Backup automático
-- [ ] Testes automatizados
+- **Frontend:** http://localhost:3002
+- **API:** http://localhost:3002/api
+- **Login:** admin@sellone.com / 123456
 
-## 🤝 Contribuição
+## 📁 Estrutura do Projeto
 
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
+```
+Sales/
+├── complete-server.js          # Servidor principal
+├── demo-server.js              # Servidor demo
+├── config/
+│   └── database.js             # Configuração do banco
+├── models/                     # Modelos do MongoDB
+├── routes/                     # Rotas da API
+├── middleware/                 # Middlewares
+├── sales-crm/                  # Frontend React
+│   ├── src/
+│   │   ├── components/         # Componentes React
+│   │   ├── pages/             # Páginas
+│   │   ├── services/          # Serviços de API
+│   │   └── styles/            # Estilos
+│   └── build/                 # Build de produção
+├── install-mongodb-local.bat   # Script de instalação MongoDB
+└── public/                    # Arquivos estáticos
+```
 
-## 📄 Licença
+## 🔧 Scripts Disponíveis
 
-Este projeto está sob a licença MIT.
+### Backend
+- `node complete-server.js` - Inicia servidor completo
+- `node demo-server.js` - Inicia servidor demo
+
+### Frontend
+- `npm start` - Inicia em modo desenvolvimento
+- `npm run build` - Gera build de produção
+
+## 🐛 Solução de Problemas
+
+### Erro de conexão com MongoDB
+1. Verifique se o MongoDB está rodando
+2. Execute `.\install-mongodb-local.bat` para instalar MongoDB local
+3. Confirme as credenciais do Atlas (se usando)
+
+### Erro de CORS
+1. Verifique se o frontend está na porta correta
+2. Confirme as configurações de CORS no servidor
+
+### Erro de build do frontend
+1. Execute `npm install` na pasta sales-crm
+2. Verifique se todas as dependências estão instaladas
+
+## 📝 Licença
+
+Este projeto é de uso interno e proprietário.
+
+## 👥 Suporte
+
+Para suporte técnico, entre em contato com a equipe de desenvolvimento.

@@ -1,6 +1,7 @@
-import React, { useEffect, useState, createContext, useContext } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { apiService } from './services/api';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
@@ -16,68 +17,47 @@ import { Configurations } from './pages/Configurations';
 import { Products } from './pages/Products';
 import { Clients } from './pages/Clients';
 import { Distributors } from './pages/Distributors';
-import { PriceList } from './pages/Proposals';
-
-// Context para gerenciar autenticação
-interface AuthContextType {
-  isAuthenticated: boolean | null;
-  setIsAuthenticated: (value: boolean) => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+import { PriceList } from './pages/PriceList';
+import { Proposals } from './pages/Proposals';
+import { CreateProposal } from './pages/CreateProposal';
+import { EditProposal } from './pages/EditProposal';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const checkAuth = () => {
-      const authenticated = apiService.isAuthenticated();
-      setIsAuthenticated(authenticated);
-    };
-
-    checkAuth();
-  }, []);
-
-  if (isAuthenticated === null) {
-    return <div>Carregando...</div>;
-  }
-
   return (
-    <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
+    <AuthProvider>
       <Routes>
         <Route 
           path="/login" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} 
+          element={<Login />} 
         />
         <Route 
           path="/" 
-          element={isAuthenticated ? <Layout /> : <Navigate to="/login" replace />}
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
         >
-          <Route index element={<Dashboard />} />
-          <Route path="leads" element={<Leads />} />
-          <Route path="sales" element={<Sales />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="goals" element={<Goals />} />
-          <Route path="performance" element={<Performance />} />
-          <Route path="analysis" element={<Analysis />} />
-          <Route path="calendar" element={<Calendar />} />
-          <Route path="notifications" element={<Notifications />} />
-          <Route path="configurations" element={<Configurations />} />
-          <Route path="products" element={<Products />} />
-          <Route path="clients" element={<Clients />} />
-          <Route path="distributors" element={<Distributors />} />
-          <Route path="proposals" element={<PriceList />} />
+          <Route index element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="leads" element={<ProtectedRoute permission="admin"><Leads /></ProtectedRoute>} />
+          <Route path="sales" element={<ProtectedRoute permission="admin"><Sales /></ProtectedRoute>} />
+          <Route path="reports" element={<ProtectedRoute permission="admin"><Reports /></ProtectedRoute>} />
+          <Route path="goals" element={<ProtectedRoute permission="admin"><Goals /></ProtectedRoute>} />
+          <Route path="performance" element={<ProtectedRoute permission="admin"><Performance /></ProtectedRoute>} />
+          <Route path="analysis" element={<ProtectedRoute permission="admin"><Analysis /></ProtectedRoute>} />
+          <Route path="calendar" element={<ProtectedRoute permission="admin"><Calendar /></ProtectedRoute>} />
+          <Route path="notifications" element={<ProtectedRoute permission="admin"><Notifications /></ProtectedRoute>} />
+          <Route path="configurations" element={<ProtectedRoute permission="admin"><Configurations /></ProtectedRoute>} />
+          <Route path="products" element={<ProtectedRoute permission="admin"><Products /></ProtectedRoute>} />
+          <Route path="clients" element={<ProtectedRoute permission="admin"><Clients /></ProtectedRoute>} />
+          <Route path="distributors" element={<ProtectedRoute permission="admin"><Distributors /></ProtectedRoute>} />
+          <Route path="proposals" element={<ProtectedRoute permission="proposals"><Proposals /></ProtectedRoute>} />
+          <Route path="proposals/create" element={<ProtectedRoute permission="proposals"><CreateProposal /></ProtectedRoute>} />
+          <Route path="proposals/edit/:id" element={<ProtectedRoute permission="proposals"><EditProposal /></ProtectedRoute>} />
+          <Route path="price-list" element={<ProtectedRoute permission="admin"><PriceList /></ProtectedRoute>} />
         </Route>
       </Routes>
-    </AuthContext.Provider>
+    </AuthProvider>
   );
 }
 

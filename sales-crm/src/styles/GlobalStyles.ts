@@ -34,7 +34,7 @@ export const GlobalStyles = createGlobalStyle`
     width: 100%;
     height: 100%;
     background: 
-      radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
       radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
       radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
     pointer-events: none;
@@ -60,7 +60,7 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, rgba(0, 212, 170, 0.3), rgba(139, 92, 246, 0.3));
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
     border-radius: 10px;
     border: 2px solid transparent;
     background-clip: content-box;
@@ -68,7 +68,7 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, rgba(0, 212, 170, 0.5), rgba(139, 92, 246, 0.5));
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5));
     transform: scale(1.1);
   }
 
@@ -78,9 +78,9 @@ export const GlobalStyles = createGlobalStyle`
 
   /* Seleção de texto - Elegante */
   ::selection {
-    background: linear-gradient(135deg, rgba(0, 212, 170, 0.3), rgba(139, 92, 246, 0.3));
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
     color: white;
-    text-shadow: 0 0 10px rgba(0, 212, 170, 0.5);
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
   }
 
   /* Focus outline - Moderno e acessível */
@@ -179,10 +179,10 @@ export const GlobalStyles = createGlobalStyle`
 
   @keyframes glow {
     0%, 100% {
-      box-shadow: 0 0 20px rgba(0, 212, 170, 0.3);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
     }
     50% {
-      box-shadow: 0 0 30px rgba(0, 212, 170, 0.6);
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
     }
   }
 
@@ -332,7 +332,7 @@ export const GlobalStyles = createGlobalStyle`
     
     body::before {
       background: 
-        radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
     }
   }

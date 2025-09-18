@@ -68,28 +68,6 @@ export interface Sale {
   updatedAt: string;
 }
 
-export interface Proposal {
-  _id: string;
-  productCode: string;
-  productName: string;
-  pricing: {
-    aVista: number;
-    tresXBoleto: number;
-    tresXCartao: number;
-  };
-  client: {
-    name: string;
-    email: string;
-    phone?: string;
-    company?: string;
-  };
-  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
-  validUntil: string;
-  notes?: string;
-  createdBy: User;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export interface ProposalStats {
   totalProposals: number;
@@ -189,6 +167,90 @@ export interface PriceListItem {
   updatedAt: string;
 }
 
+export interface PriceList {
+  _id: string;
+  distributor: {
+    _id: string;
+    apelido: string;
+    razaoSocial: string;
+    contato: {
+      nome: string;
+      telefone: string;
+    };
+  };
+  products: Array<{
+    _id: string;
+    product: {
+      _id: string;
+      name: string;
+      description: string;
+      category: string;
+    };
+    pricing: {
+      aVista: number;
+      cartao: number;
+      boleto: number;
+    };
+    isActive: boolean;
+    validFrom: string;
+    validUntil: string;
+    notes: string;
+  }>;
+  createdBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProposalItem {
+  product: {
+    _id: string;
+    name: string;
+    description?: string;
+    category?: string;
+    price: number;
+  };
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  total: number;
+}
+
+export interface Proposal {
+  _id: string;
+  proposalNumber: string;
+  client: {
+    name: string;
+    email: string;
+    phone?: string;
+    company?: string;
+  };
+  seller: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  distributor: {
+    _id: string;
+    apelido: string;
+    razaoSocial: string;
+  };
+  items: ProposalItem[];
+  subtotal: number;
+  discount: number;
+  total: number;
+  paymentCondition: string;
+  observations?: string;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+  validUntil: string;
+  createdBy: User;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -249,6 +311,13 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
+      
+      // Verificar se a resposta é JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(`Resposta não é JSON. Content-Type: ${contentType}`);
+      }
+
       const data = await response.json();
 
       console.log('Resposta da API:', response.status, data);
@@ -412,7 +481,7 @@ class ApiService {
     return this.request<Proposal>(`/proposals/${id}`);
   }
 
-  async createProposal(proposalData: Omit<Proposal, '_id' | 'createdBy' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Proposal>> {
+  async createProposal(proposalData: Omit<Proposal, '_id' | 'proposalNumber' | 'createdBy' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Proposal>> {
     return this.request<Proposal>('/proposals', {
       method: 'POST',
       body: JSON.stringify(proposalData),
@@ -510,13 +579,135 @@ class ApiService {
   }
 
   // Lista de Preços
-  async getPriceList(page = 1, limit = 10, distributor?: string, product?: string, isActive?: boolean): Promise<ApiResponse<PriceListItem[]>> {
+  async getPriceList(page = 1, limit = 10, distributor?: string, product?: string, isActive?: boolean): Promise<ApiResponse<PriceList[]>> {
     let url = `/price-list?page=${page}&limit=${limit}`;
     if (distributor) url += `&distributor=${distributor}`;
     if (product) url += `&product=${product}`;
     if (isActive !== undefined) url += `&isActive=${isActive}`;
     
-    return this.request<PriceListItem[]>(url);
+    return this.request<PriceList[]>(url);
+  }
+
+  async getPriceListItems(page = 1, limit = 10, distributor?: string, product?: string, isActive?: boolean): Promise<ApiResponse<PriceListItem[]>> {
+    // Buscar as listas e extrair os itens individuais
+    const response = await this.getPriceList(page, limit, distributor, product, isActive);
+    
+    if (response.success && response.data) {
+      // Flatten all products from all price lists into individual items
+      const items: PriceListItem[] = [];
+      response.data.forEach(priceList => {
+        priceList.products.forEach(product => {
+          items.push({
+            _id: product._id,
+            distributor: {
+              _id: priceList.distributor._id,
+              apelido: priceList.distributor.apelido,
+              razaoSocial: priceList.distributor.razaoSocial,
+              idDistribuidor: 'DIST001', // Valor padrão
+              contato: {
+                nome: priceList.distributor.contato.nome,
+                email: 'contato@distribuidor.com', // Valor padrão
+                telefone: priceList.distributor.contato.telefone,
+                cargo: 'Representante'
+              },
+              origem: 'Sistema', // Valor padrão
+              atendimento: {
+                horario: '08:00 às 18:00', // Valor padrão
+                dias: 'Segunda a Sexta', // Valor padrão
+                observacoes: 'Atendimento padrão' // Valor padrão
+              },
+              frete: {
+                tipo: 'CIF', // Valor padrão
+                valor: 0, // Valor padrão
+                prazo: 3, // Valor padrão
+                observacoes: 'Frete padrão' // Valor padrão
+              },
+              pedidoMinimo: {
+                valor: 0, // Valor padrão
+                observacoes: 'Sem mínimo' // Valor padrão
+              },
+              endereco: {
+                cep: '00000-000', // Valor padrão
+                logradouro: 'N/A', // Valor padrão
+                numero: 'N/A', // Valor padrão
+                complemento: 'N/A', // Valor padrão
+                bairro: 'N/A', // Valor padrão
+                cidade: 'N/A', // Valor padrão
+                uf: 'N/A' // Valor padrão
+              },
+              isActive: true,
+              observacoes: 'Distribuidor do sistema', // Valor padrão
+              createdBy: {
+                _id: '1',
+                name: 'Administrador',
+                email: 'admin@sellone.com',
+                role: 'admin',
+                phone: '11999999999',
+                isActive: true,
+                createdAt: priceList.createdAt,
+                updatedAt: priceList.updatedAt
+              },
+              createdAt: priceList.createdAt,
+              updatedAt: priceList.updatedAt
+            },
+            product: {
+              _id: product.product._id,
+              name: product.product.name,
+              description: product.product.description,
+              price: 0, // Valor padrão
+              cost: 0, // Valor padrão
+              category: product.product.category,
+              brand: 'N/A', // Valor padrão
+              sku: 'N/A', // Valor padrão
+              barcode: 'N/A', // Valor padrão
+              stock: {
+                current: 0,
+                min: 0,
+                max: 0
+              },
+              images: [],
+              tags: [],
+              isActive: true,
+              createdAt: priceList.createdAt,
+              updatedAt: priceList.updatedAt
+            },
+            pricing: {
+              aVista: product.pricing.aVista,
+              tresXBoleto: product.pricing.boleto,
+              tresXCartao: product.pricing.cartao
+            },
+            isActive: product.isActive,
+            validFrom: product.validFrom,
+            validUntil: product.validUntil,
+            notes: product.notes,
+            createdBy: {
+              _id: priceList.createdBy._id,
+              name: priceList.createdBy.name,
+              email: priceList.createdBy.email,
+              role: 'admin', // Valor padrão
+              phone: '11999999999', // Valor padrão
+              isActive: true, // Valor padrão
+              createdAt: priceList.createdAt,
+              updatedAt: priceList.updatedAt
+            },
+            createdAt: priceList.createdAt,
+            updatedAt: priceList.updatedAt
+          });
+        });
+      });
+      
+      return {
+        success: true,
+        data: items,
+        pagination: response.pagination
+      };
+    }
+    
+    return {
+      success: false,
+      data: [],
+      pagination: response.pagination
+    };
   }
 
   async getPriceListItem(id: string): Promise<ApiResponse<PriceListItem>> {
@@ -543,8 +734,29 @@ class ApiService {
     });
   }
 
+  async deletePriceList(id: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/price-list/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async updateProposalStatus(id: string, status: Proposal['status']): Promise<ApiResponse<Proposal>> {
+    return this.request<Proposal>(`/proposals/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
   async getPriceListByDistributor(distributorId: string, page = 1, limit = 10): Promise<ApiResponse<PriceListItem[]>> {
     return this.request<PriceListItem[]>(`/price-list/distributor/${distributorId}?page=${page}&limit=${limit}`);
+  }
+
+  // Método público para requisições customizadas
+  async customRequest<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, options);
   }
 
   // Verificar se está autenticado

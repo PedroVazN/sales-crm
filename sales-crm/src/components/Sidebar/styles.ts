@@ -44,18 +44,18 @@ export const Logo = styled.div`
     left: 20px;
     right: 20px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 212, 170, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
   }
   
   h1 {
     font-size: 2.2rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #00d4aa 0%, #6366f1 50%, #ec4899 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #ec4899 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin: 0;
-    text-shadow: 0 0 30px rgba(0, 212, 170, 0.3);
+    text-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
     animation: glow 2s ease-in-out infinite alternate;
   }
   
@@ -70,8 +70,8 @@ export const Logo = styled.div`
   }
 
   @keyframes glow {
-    from { filter: drop-shadow(0 0 10px rgba(0, 212, 170, 0.3)); }
-    to { filter: drop-shadow(0 0 20px rgba(0, 212, 170, 0.6)); }
+    from { filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3)); }
+    to { filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.6)); }
   }
 `;
 
@@ -96,7 +96,7 @@ export const MenuTitle = styled.h3`
     transform: translateY(-50%);
     width: 4px;
     height: 4px;
-    background: linear-gradient(135deg, #00d4aa, #6366f1);
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
     border-radius: 50%;
   }
 `;
@@ -112,14 +112,14 @@ export const MenuItem = styled.div<{ $isActive?: boolean }>`
   border-radius: 12px;
   
   background: ${({ $isActive }) => 
-    $isActive ? 'rgba(0, 212, 170, 0.1)' : 'transparent'};
+    $isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent'};
   
   color: ${({ $isActive }) => 
-    $isActive ? '#00d4aa' : 'rgba(255, 255, 255, 0.7)'};
+    $isActive ? '#3b82f6' : 'rgba(255, 255, 255, 0.7)'};
   
   &:hover {
     background: rgba(255, 255, 255, 0.05);
-    color: #00d4aa;
+    color: #3b82f6;
     transform: translateX(4px);
   }
   
@@ -131,7 +131,7 @@ export const MenuItem = styled.div<{ $isActive?: boolean }>`
     transform: translateY(-50%);
     width: 3px;
     height: 0;
-    background: linear-gradient(135deg, #00d4aa, #6366f1);
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
     border-radius: 0 2px 2px 0;
     transition: all 0.3s ease;
   }

@@ -1,8 +1,8 @@
 import styled from 'styled-components';
 
 export const Container = styled.div`
-  padding: ${({ theme }) => theme.spacing.xl};
-  background: ${({ theme }) => theme.colors.background.primary};
+  padding: 2rem;
+  background: ${({ theme }) => theme.colors.background};
   min-height: 100vh;
 `;
 
@@ -10,7 +10,9 @@ export const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.xxl};
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 `;
 
 export const Title = styled.h1`
@@ -23,163 +25,152 @@ export const Title = styled.h1`
 export const Actions = styled.div`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 1rem;
+  flex-wrap: wrap;
 `;
 
 export const SearchContainer = styled.div`
+  position: relative;
   display: flex;
   align-items: center;
   background: ${({ theme }) => theme.colors.background.card};
   border: 1px solid ${({ theme }) => theme.colors.border.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
   min-width: 300px;
-  
+
   svg {
-    color: ${({ theme }) => theme.colors.text.tertiary};
-    margin-right: ${({ theme }) => theme.spacing.sm};
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin-right: 0.5rem;
   }
 `;
 
 export const SearchInput = styled.input`
-  background: transparent;
   border: none;
   outline: none;
+  background: transparent;
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: 0.875rem;
-  flex: 1;
-  
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.text.tertiary};
-  }
-`;
+  width: 100%;
 
-export const FilterButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  background: ${({ theme }) => theme.colors.background.card};
-  border: 1px solid ${({ theme }) => theme.colors.border.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    color: ${({ theme }) => theme.colors.primary};
-    border-color: ${({ theme }) => theme.colors.primary};
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.text.secondary};
   }
 `;
 
 export const CreateButton = styled.button`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: 0.5rem;
   background: ${({ theme }) => theme.colors.primary};
+  color: white;
   border: none;
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  color: ${({ theme }) => theme.colors.text.inverse};
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  
-  &:hover {
-    background: ${({ theme }) => theme.colors.success};
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.shadows.glow};
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.primary};
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
 export const Content = styled.div`
   background: ${({ theme }) => theme.colors.background.card};
+  border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.colors.border.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  padding: ${({ theme }) => theme.spacing.xxl};
-  backdrop-filter: blur(10px);
-  text-align: center;
-  
-  p {
-    color: ${({ theme }) => theme.colors.text.secondary};
-    font-size: 1.125rem;
-  }
+  overflow: hidden;
+`;
+
+export const TableWrapper = styled.div`
+  overflow-x: auto;
+  width: 100%;
 `;
 
 export const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.875rem;
+  min-width: 1200px;
   background: ${({ theme }) => theme.colors.background.card};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: ${({ theme }) => theme.shadows.medium};
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 `;
 
 export const TableHeader = styled.thead`
-  background: ${({ theme }) => theme.colors.background.secondary};
+  background: ${({ theme }) => theme.colors.background};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.primary};
 `;
 
 export const TableRow = styled.tr`
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.secondary};
   
   &:hover {
-    background: ${({ theme }) => theme.colors.background.secondary};
-  }
-  
-  &:last-child {
-    border-bottom: none;
+    background: ${({ theme }) => theme.colors.background};
   }
 `;
 
 export const TableCell = styled.td`
-  padding: ${({ theme }) => theme.spacing.md};
+  padding: 0.75rem;
   text-align: left;
+  vertical-align: middle;
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: 0.875rem;
+  white-space: nowrap;
+  border-right: 1px solid ${({ theme }) => theme.colors.border.secondary};
   
-  &:first-child {
-    font-weight: 600;
+  &:last-child {
+    border-right: none;
   }
 `;
 
 export const TableBody = styled.tbody``;
 
 export const ActionButton = styled.button`
-  background: none;
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: 6px;
+  background: ${({ theme }) => theme.colors.background.card};
   color: ${({ theme }) => theme.colors.text.secondary};
   cursor: pointer;
-  padding: ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
   transition: all 0.2s ease;
-  margin-right: ${({ theme }) => theme.spacing.sm};
-  
-  &:hover {
-    background: ${({ theme }) => theme.colors.background.secondary};
-    color: ${({ theme }) => theme.colors.primary};
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.background};
+    color: ${({ theme }) => theme.colors.text.primary};
   }
-  
-  &:last-child:hover {
-    color: ${({ theme }) => theme.colors.error};
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
 export const StatusBadge = styled.span<{ $isActive: boolean }>`
   display: inline-block;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.borderRadius.full};
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  
-  ${({ $isActive, theme }) => $isActive ? `
-    background: ${theme.colors.success}20;
-    color: ${theme.colors.success};
-  ` : `
-    background: ${theme.colors.error}20;
-    color: ${theme.colors.error};
-  `}
+  background: ${({ $isActive, theme }) => 
+    $isActive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'};
+  color: ${({ $isActive }) => 
+    $isActive ? '#10b981' : '#ef4444'};
+  border: 1px solid ${({ $isActive }) => 
+    $isActive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'};
 `;
 
 export const EmptyState = styled.div`
@@ -187,24 +178,24 @@ export const EmptyState = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.spacing.xxl};
+  padding: 4rem 2rem;
   text-align: center;
-  
+
   svg {
-    color: ${({ theme }) => theme.colors.text.tertiary};
-    margin-bottom: ${({ theme }) => theme.spacing.lg};
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin-bottom: 1rem;
   }
-  
+
   h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
     color: ${({ theme }) => theme.colors.text.primary};
-    margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
-    font-size: 1.5rem;
+    margin: 0 0 0.5rem 0;
   }
-  
+
   p {
     color: ${({ theme }) => theme.colors.text.secondary};
-    margin: 0 0 ${({ theme }) => theme.spacing.lg} 0;
-    font-size: 1rem;
+    margin: 0 0 2rem 0;
   }
 `;
 
@@ -213,21 +204,20 @@ export const LoadingState = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.spacing.xxl};
+  padding: 4rem 2rem;
   text-align: center;
-  
+
   svg {
     color: ${({ theme }) => theme.colors.primary};
-    margin-bottom: ${({ theme }) => theme.spacing.lg};
+    margin-bottom: 1rem;
     animation: spin 1s linear infinite;
   }
-  
+
   p {
     color: ${({ theme }) => theme.colors.text.secondary};
     margin: 0;
-    font-size: 1rem;
   }
-  
+
   @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -239,169 +229,231 @@ export const ErrorState = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.spacing.xxl};
+  padding: 4rem 2rem;
   text-align: center;
-  
+
   p {
-    color: ${({ theme }) => theme.colors.error};
-    margin: 0 0 ${({ theme }) => theme.spacing.lg} 0;
-    font-size: 1rem;
+    color: ${({ theme }) => theme.colors.text.secondary};
+    margin: 0 0 1rem 0;
   }
-  
+
   button {
     background: ${({ theme }) => theme.colors.primary};
+    color: white;
     border: none;
-    border-radius: ${({ theme }) => theme.borderRadius.lg};
-    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-    color: ${({ theme }) => theme.colors.text.inverse};
-    font-weight: 600;
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
     cursor: pointer;
-    transition: all 0.2s ease;
-    
+    font-size: 0.875rem;
+    font-weight: 600;
+
     &:hover {
-      background: ${({ theme }) => theme.colors.success};
-      transform: translateY(-2px);
+      background: ${({ theme }) => theme.colors.primary};
     }
   }
 `;
 
-// Novos estilos para agrupamento
-export const DistributorGroup = styled.div`
-  background: ${({ theme }) => theme.colors.background.card};
-  border: 1px solid ${({ theme }) => theme.colors.border.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-  overflow: hidden;
-  box-shadow: ${({ theme }) => theme.shadows.medium};
-`;
-
-export const DistributorHeader = styled.div`
+// Modal styles
+export const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: ${({ theme }) => theme.spacing.lg};
-  background: ${({ theme }) => theme.colors.background.secondary};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: ${({ theme }) => theme.colors.background.tertiary};
-  }
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
 `;
 
-export const DistributorInfo = styled.div`
+export const ModalContent = styled.div`
+  background: ${({ theme }) => theme.colors.background.card};
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
 `;
 
-export const DistributorName = styled.h3`
+export const ModalHeader = styled.div`
+  padding: 1.5rem;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.primary};
+`;
+
+export const ModalTitle = styled.h2`
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 600;
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
 `;
 
-export const DistributorDetails = styled.p`
+export const ModalBody = styled.div`
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+`;
+
+export const ModalFooter = styled.div`
+  padding: 1.5rem;
+  border-top: 1px solid ${({ theme }) => theme.colors.border.primary};
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+`;
+
+export const FormGroup = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+export const Label = styled.label`
+  display: block;
   font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0;
-`;
-
-export const ProductCount = styled.span`
-  background: ${({ theme }) => theme.colors.primary}20;
-  color: ${({ theme }) => theme.colors.primary};
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.borderRadius.full};
-  font-size: 0.75rem;
   font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: 0.5rem;
 `;
 
-export const ToggleButton = styled.div`
+export const Select = styled.select`
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: 6px;
+  background: ${({ theme }) => theme.colors.background.card};
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: 0.875rem;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+export const Input = styled.input`
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: 6px;
+  background: ${({ theme }) => theme.colors.background.card};
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: 0.875rem;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+export const Button = styled.button`
+  padding: 0.75rem 1.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: 6px;
+  background: ${({ theme }) => theme.colors.background.card};
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background};
+  }
+`;
+
+export const ProductItem = styled.div`
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: ${({ theme }) => theme.colors.background};
+`;
+
+export const ProductHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+`;
+
+export const ProductName = styled.div`
+  flex: 1;
+  margin-right: 1rem;
+`;
+
+export const ProductPricing = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+export const PriceRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+`;
+
+export const PriceLabel = styled.label`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+  min-width: 100px;
+`;
+
+export const PriceInput = styled.input`
+  padding: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: 4px;
+  background: ${({ theme }) => theme.colors.background.card};
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: 0.875rem;
+  width: 120px;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+
+export const RemoveButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  background: ${({ theme }) => theme.colors.background.primary};
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
+  border-radius: 6px;
+  background: ${({ theme }) => theme.colors.background.card};
   color: ${({ theme }) => theme.colors.text.secondary};
+  cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
-    background: ${({ theme }) => theme.colors.background.secondary};
-    color: ${({ theme }) => theme.colors.primary};
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
   }
 `;
 
-export const ProductsList = styled.div`
-  background: ${({ theme }) => theme.colors.background.primary};
-  border-top: 1px solid ${({ theme }) => theme.colors.border.primary};
-`;
-
-export const ProductRow = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1fr;
-  gap: ${({ theme }) => theme.spacing.lg};
-  padding: ${({ theme }) => theme.spacing.lg};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.primary};
+export const AddProductButton = styled.button`
+  display: flex;
   align-items: center;
-  
-  &:last-child {
-    border-bottom: none;
-  }
-  
-  &:hover {
-    background: ${({ theme }) => theme.colors.background.secondary};
-  }
-`;
-
-export const ProductInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-
-export const ProductName = styled.h4`
-  font-size: 1rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0;
-`;
-
-export const ProductDescription = styled.p`
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0;
-`;
-
-export const PricingInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-export const PriceItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-export const PriceLabel = styled.span<{ $color: string }>`
+  gap: 0.5rem;
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: ${({ $color }) => $color};
-`;
+  cursor: pointer;
+  transition: all 0.2s ease;
 
-export const PriceValue = styled.span`
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-export const ProductActions = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
-  justify-content: flex-end;
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary};
+  }
 `;

@@ -15,37 +15,12 @@ export const Container = styled.div`
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
+      radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.03) 0%, transparent 50%);
     pointer-events: none;
-    animation: float 20s ease-in-out infinite;
   }
 
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.01) 50%, transparent 70%),
-      linear-gradient(-45deg, transparent 30%, rgba(0, 212, 170, 0.02) 50%, transparent 70%);
-    pointer-events: none;
-    animation: shimmer 15s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    33% { transform: translateY(-10px) rotate(0.5deg); }
-    66% { transform: translateY(5px) rotate(-0.5deg); }
-  }
-
-  @keyframes shimmer {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.8; }
-  }
 `;
 
 export const Header = styled.div`
@@ -58,13 +33,8 @@ export const Header = styled.div`
 export const Title = styled.h1`
   font-size: 2.5rem;
   font-weight: 800;
-  background: ${({ theme }) => theme.colors.gradients.primary};
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
-  text-shadow: 0 0 30px rgba(0, 212, 170, 0.4);
-  animation: glow 3s ease-in-out infinite alternate;
   letter-spacing: -1px;
   position: relative;
   
@@ -75,23 +45,8 @@ export const Title = styled.h1`
     left: 0;
     width: 80px;
     height: 3px;
-    background: ${({ theme }) => theme.colors.gradients.primary};
+    background: ${({ theme }) => theme.colors.primary};
     border-radius: 3px;
-    animation: expand 1.2s ease-out 0.8s both;
-  }
-
-  @keyframes glow {
-    0%, 100% { 
-      filter: drop-shadow(0 0 15px rgba(0, 212, 170, 0.3)) drop-shadow(0 0 30px rgba(139, 92, 246, 0.2)); 
-    }
-    50% { 
-      filter: drop-shadow(0 0 25px rgba(0, 212, 170, 0.5)) drop-shadow(0 0 45px rgba(139, 92, 246, 0.3)); 
-    }
-  }
-
-  @keyframes expand {
-    from { width: 0; }
-    to { width: 80px; }
   }
 `;
 
@@ -176,30 +131,9 @@ export const MetricCard = styled.div`
 export const MetricValue = styled.div`
   font-size: 2.5rem;
   font-weight: 800;
-  background: ${({ theme }) => theme.colors.gradients.primary};
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
-  text-shadow: 0 0 20px rgba(0, 212, 170, 0.4);
-  animation: glow 2s ease-in-out infinite alternate;
   position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: ${({ theme }) => theme.colors.gradients.primary};
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: blur(1px);
-    opacity: 0.3;
-    z-index: -1;
-  }
 `;
 
 export const MetricLabel = styled.div`

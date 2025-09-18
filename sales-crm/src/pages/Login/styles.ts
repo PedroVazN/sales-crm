@@ -18,35 +18,11 @@ export const Container = styled.div`
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.08) 0%, transparent 50%);
-    animation: float 20s ease-in-out infinite;
+      radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
   }
 
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.02) 50%, transparent 70%),
-      linear-gradient(-45deg, transparent 30%, rgba(0, 212, 170, 0.03) 50%, transparent 70%);
-    animation: shimmer 8s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    33% { transform: translateY(-20px) rotate(1deg); }
-    66% { transform: translateY(10px) rotate(-1deg); }
-  }
-
-  @keyframes shimmer {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.8; }
-  }
 `;
 
 export const LoginCard = styled.div`
@@ -118,7 +94,7 @@ export const Logo = styled.div`
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin: 0;
-    text-shadow: 0 0 50px rgba(0, 212, 170, 0.4);
+    text-shadow: 0 0 50px rgba(59, 130, 246, 0.4);
     animation: glow 3s ease-in-out infinite alternate, float 6s ease-in-out infinite;
     letter-spacing: -3px;
     position: relative;
@@ -167,10 +143,10 @@ export const Logo = styled.div`
 
   @keyframes glow {
     0%, 100% { 
-      filter: drop-shadow(0 0 20px rgba(0, 212, 170, 0.3)) drop-shadow(0 0 40px rgba(139, 92, 246, 0.2)); 
+      filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.3)) drop-shadow(0 0 40px rgba(139, 92, 246, 0.2)); 
     }
     50% { 
-      filter: drop-shadow(0 0 30px rgba(0, 212, 170, 0.6)) drop-shadow(0 0 60px rgba(139, 92, 246, 0.4)); 
+      filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.6)) drop-shadow(0 0 60px rgba(139, 92, 246, 0.4)); 
     }
   }
 
