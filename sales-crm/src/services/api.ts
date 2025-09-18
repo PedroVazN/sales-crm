@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3002/api';
+const API_BASE_URL = 'http://localhost:3000/api';
 
 export interface User {
   _id: string;
@@ -6,6 +6,13 @@ export interface User {
   email: string;
   role: 'admin' | 'vendedor' | 'cliente';
   phone?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -108,32 +115,32 @@ export interface Client {
 
 export interface Distributor {
   _id: string;
-  apelido: string;
-  razaoSocial: string;
-  idDistribuidor: string;
-  contato: {
+  apelido?: string;
+  razaoSocial?: string;
+  idDistribuidor?: string;
+  contato?: {
     nome: string;
     email: string;
     telefone: string;
     cargo?: string;
   };
-  origem: string;
-  atendimento: {
+  origem?: string;
+  atendimento?: {
     horario?: string;
     dias?: string;
     observacoes?: string;
   };
-  frete: {
+  frete?: {
     tipo: 'CIF' | 'FOB' | 'TERCEIRO';
     valor?: number;
     prazo?: number;
     observacoes?: string;
   };
-  pedidoMinimo: {
+  pedidoMinimo?: {
     valor: number;
     observacoes?: string;
   };
-  endereco: {
+  endereco?: {
     cep?: string;
     logradouro?: string;
     numero?: string;
@@ -147,6 +154,22 @@ export interface Distributor {
   createdBy: User;
   createdAt: string;
   updatedAt: string;
+  // Propriedades para compatibilidade com estruturas antigas
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
+  contactPerson?: {
+    name: string;
+    position?: string;
+  };
+  notes?: string;
 }
 
 export interface PriceListItem {
@@ -235,8 +258,8 @@ export interface Proposal {
   };
   distributor: {
     _id: string;
-    apelido: string;
-    razaoSocial: string;
+    apelido?: string;
+    razaoSocial?: string;
   };
   items: ProposalItem[];
   subtotal: number;
@@ -249,6 +272,144 @@ export interface Proposal {
   createdBy: User;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Event {
+  _id: string;
+  title: string;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  startTime?: string;
+  endTime?: string;
+  type: 'meeting' | 'call' | 'visit' | 'follow_up' | 'proposal' | 'sale' | 'other';
+  priority: 'low' | 'medium' | 'high';
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  client?: {
+    _id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  distributor?: {
+    _id: string;
+    apelido: string;
+    razaoSocial: string;
+  };
+  location?: string;
+  notes?: string;
+  reminder?: {
+    enabled: boolean;
+    minutes: number;
+  };
+  createdBy: User;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Goal {
+  _id: string;
+  title: string;
+  description?: string;
+  type: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  category: 'sales' | 'revenue' | 'clients' | 'proposals' | 'calls' | 'visits' | 'custom';
+  targetValue: number;
+  currentValue: number;
+  unit: 'quantity' | 'currency' | 'percentage' | 'hours' | 'calls' | 'visits';
+  period: {
+    startDate: string;
+    endDate: string;
+    year: number;
+    month?: number;
+    week?: number;
+    day?: number;
+  };
+  status: 'active' | 'completed' | 'paused' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  assignedTo: User;
+  createdBy: User;
+  progress: {
+    percentage: number;
+    lastUpdated: string;
+    milestones: Array<{
+      date: string;
+      value: number;
+      description: string;
+    }>;
+  };
+  rewards?: {
+    enabled: boolean;
+    description?: string;
+    points: number;
+  };
+  notifications?: {
+    enabled: boolean;
+    frequency: 'daily' | 'weekly' | 'monthly';
+    threshold: number;
+  };
+  tags?: string[];
+  isRecurring: boolean;
+  parentGoal?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Notification {
+  _id: string;
+  title: string;
+  message: string;
+  type: 'goal_achieved' | 'goal_milestone' | 'goal_created' | 'goal_updated' | 'goal_completed' | 'system' | 'warning' | 'info';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  recipient: string;
+  sender: string;
+  relatedEntity?: string;
+  relatedEntityType?: 'goal' | 'sale' | 'proposal' | 'client' | 'distributor';
+  isRead: boolean;
+  readAt?: string;
+  data: any;
+  expiresAt?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Interfaces para operações de API que usam IDs em vez de objetos completos
+export interface CreateGoalData {
+  title: string;
+  description?: string;
+  type: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  category: 'sales' | 'revenue' | 'clients' | 'proposals' | 'calls' | 'visits' | 'custom';
+  targetValue: number;
+  currentValue: number;
+  unit: 'quantity' | 'currency' | 'percentage' | 'hours' | 'calls' | 'visits';
+  period: {
+    startDate: string;
+    endDate: string;
+    year: number;
+    month?: number;
+    week?: number;
+    day?: number;
+  };
+  status: 'active' | 'completed' | 'paused' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  assignedTo: string; // ID do usuário
+  tags?: string[];
+  isRecurring: boolean;
+  parentGoal?: string;
+  rewards?: {
+    enabled: boolean;
+    description?: string;
+    points: number;
+  };
+  notifications?: {
+    enabled: boolean;
+    frequency: 'daily' | 'weekly' | 'monthly';
+    threshold: number;
+  };
+}
+
+export interface UpdateGoalData extends Partial<CreateGoalData> {
+  assignedTo?: string; // ID do usuário
 }
 
 export interface LoginRequest {
@@ -362,27 +523,6 @@ class ApiService {
     localStorage.removeItem('currentUser');
   }
 
-  // Usuários
-  async getUsers(page = 1, limit = 10): Promise<ApiResponse<User[]>> {
-    return this.request<User[]>(`/users?page=${page}&limit=${limit}`);
-  }
-
-  async getUser(id: string): Promise<ApiResponse<User>> {
-    return this.request<User>(`/users/${id}`);
-  }
-
-  async updateUser(id: string, userData: Partial<User>): Promise<ApiResponse<User>> {
-    return this.request<User>(`/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(userData),
-    });
-  }
-
-  async deleteUser(id: string): Promise<ApiResponse<void>> {
-    return this.request<void>(`/users/${id}`, {
-      method: 'DELETE',
-    });
-  }
 
   // Produtos
   async getProducts(page = 1, limit = 10, search?: string, category?: string): Promise<ApiResponse<Product[]>> {
@@ -749,6 +889,232 @@ class ApiService {
 
   async getPriceListByDistributor(distributorId: string, page = 1, limit = 10): Promise<ApiResponse<PriceListItem[]>> {
     return this.request<PriceListItem[]>(`/price-list/distributor/${distributorId}?page=${page}&limit=${limit}`);
+  }
+
+  // Eventos do Calendário
+  async getEvents(page = 1, limit = 100, search = '', startDate?: string, endDate?: string): Promise<ApiResponse<Event[]>> {
+    let url = `/events?page=${page}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+    
+    return this.request<Event[]>(url);
+  }
+
+  async getEvent(id: string): Promise<ApiResponse<Event>> {
+    return this.request<Event>(`/events/${id}`);
+  }
+
+  async createEvent(eventData: Omit<Event, '_id' | 'createdBy' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Event>> {
+    return this.request<Event>('/events', {
+      method: 'POST',
+      body: JSON.stringify(eventData),
+    });
+  }
+
+  async updateEvent(id: string, eventData: Partial<Event>): Promise<ApiResponse<Event>> {
+    return this.request<Event>(`/events/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(eventData),
+    });
+  }
+
+  async deleteEvent(id: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/events/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getEventsByDateRange(startDate: string, endDate: string): Promise<ApiResponse<Event[]>> {
+    return this.request<Event[]>(`/events/range?startDate=${startDate}&endDate=${endDate}`);
+  }
+
+  async getEventsByType(type: Event['type']): Promise<ApiResponse<Event[]>> {
+    return this.request<Event[]>(`/events/type/${type}`);
+  }
+
+  async updateEventStatus(id: string, status: Event['status']): Promise<ApiResponse<Event>> {
+    return this.request<Event>(`/events/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // Metas
+  async getGoals(page = 1, limit = 50, search = '', type?: string, category?: string, status?: string, assignedTo?: string, startDate?: string, endDate?: string): Promise<ApiResponse<Goal[]>> {
+    let url = `/goals?page=${page}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (type) url += `&type=${type}`;
+    if (category) url += `&category=${category}`;
+    if (status) url += `&status=${status}`;
+    if (assignedTo) url += `&assignedTo=${assignedTo}`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+    
+    return this.request<Goal[]>(url);
+  }
+
+  async getGoal(id: string): Promise<ApiResponse<Goal>> {
+    return this.request<Goal>(`/goals/${id}`);
+  }
+
+  async createGoal(goalData: CreateGoalData): Promise<ApiResponse<Goal>> {
+    return this.request<Goal>('/goals', {
+      method: 'POST',
+      body: JSON.stringify(goalData),
+    });
+  }
+
+  async updateGoal(id: string, goalData: UpdateGoalData): Promise<ApiResponse<Goal>> {
+    return this.request<Goal>(`/goals/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(goalData),
+    });
+  }
+
+  async deleteGoal(id: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/goals/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getGoalsDashboard(period: 'day' | 'week' | 'month' | 'year' = 'month', userId?: string): Promise<ApiResponse<any>> {
+    let url = `/goals/dashboard?period=${period}`;
+    if (userId) url += `&userId=${userId}`;
+    return this.request<any>(url);
+  }
+
+  async updateGoalProgress(id: string, value: number, description?: string): Promise<ApiResponse<Goal>> {
+    return this.request<Goal>(`/goals/${id}/progress`, {
+      method: 'PATCH',
+      body: JSON.stringify({ value, description }),
+    });
+  }
+
+  async updateGoalStatus(id: string, status: Goal['status']): Promise<ApiResponse<Goal>> {
+    return this.request<Goal>(`/goals/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // ===== NOTIFICAÇÕES =====
+  async getNotifications(page = 1, limit = 20, unreadOnly = false, type?: string): Promise<ApiResponse<Notification[]>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      unreadOnly: unreadOnly.toString(),
+      ...(type && { type })
+    });
+    return this.request<Notification[]>(`/notifications?${params}`);
+  }
+
+  async getUnreadNotificationCount(): Promise<ApiResponse<{ count: number }>> {
+    return this.request<{ count: number }>('/notifications/unread-count');
+  }
+
+  async markNotificationAsRead(id: string): Promise<ApiResponse<Notification>> {
+    return this.request<Notification>(`/notifications/${id}/read`, {
+      method: 'PATCH',
+    });
+  }
+
+  async markAllNotificationsAsRead(): Promise<ApiResponse<void>> {
+    return this.request<void>('/notifications/read-all', {
+      method: 'PATCH',
+    });
+  }
+
+  async deleteNotification(id: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/notifications/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async clearAllNotifications(): Promise<ApiResponse<void>> {
+    return this.request<void>('/notifications/clear-all', {
+      method: 'DELETE',
+    });
+  }
+
+  // ===== USUÁRIOS =====
+  async getUsers(page = 1, limit = 20, search = '', role = ''): Promise<ApiResponse<User[]>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search }),
+      ...(role && { role })
+    });
+    return this.request<User[]>(`/users?${params}`);
+  }
+
+  async getUser(id: string): Promise<ApiResponse<User>> {
+    return this.request<User>(`/users/${id}`);
+  }
+
+  async createUser(userData: {
+    name: string;
+    email: string;
+    password: string;
+    role?: 'admin' | 'vendedor' | 'cliente';
+    phone?: string;
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
+  }): Promise<ApiResponse<User>> {
+    return this.request<User>('/users', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async updateUser(id: string, userData: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
+    isActive?: boolean;
+  }): Promise<ApiResponse<User>> {
+    return this.request<User>(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async updateUserPassword(id: string, currentPassword: string, newPassword: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/users/${id}/password`, {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  }
+
+  async deleteUser(id: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`/users/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getUserStats(): Promise<ApiResponse<{
+    total: number;
+    active: number;
+    inactive: number;
+    byRole: {
+      admin: number;
+      vendedor: number;
+      cliente: number;
+    };
+  }>> {
+    return this.request('/users/stats/overview');
   }
 
   // Método público para requisições customizadas

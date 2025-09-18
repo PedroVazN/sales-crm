@@ -43,35 +43,35 @@ export const DistributorModal: React.FC<DistributorModalProps> = ({
     razaoSocial: distributor?.razaoSocial || '',
     idDistribuidor: distributor?.idDistribuidor || '',
     contato: {
-      nome: distributor?.contato.nome || '',
-      email: distributor?.contato.email || '',
-      telefone: distributor?.contato.telefone || '',
-      cargo: distributor?.contato.cargo || ''
+      nome: distributor?.contato?.nome || '',
+      email: distributor?.contato?.email || '',
+      telefone: distributor?.contato?.telefone || '',
+      cargo: distributor?.contato?.cargo || ''
     },
     origem: distributor?.origem || '',
     atendimento: {
-      horario: distributor?.atendimento.horario || '',
-      dias: distributor?.atendimento.dias || '',
-      observacoes: distributor?.atendimento.observacoes || ''
+      horario: distributor?.atendimento?.horario || '',
+      dias: distributor?.atendimento?.dias || '',
+      observacoes: distributor?.atendimento?.observacoes || ''
     },
     frete: {
-      tipo: distributor?.frete.tipo || 'CIF',
-      valor: distributor?.frete.valor || 0,
-      prazo: distributor?.frete.prazo || 0,
-      observacoes: distributor?.frete.observacoes || ''
+      tipo: distributor?.frete?.tipo || 'CIF',
+      valor: distributor?.frete?.valor || 0,
+      prazo: distributor?.frete?.prazo || 0,
+      observacoes: distributor?.frete?.observacoes || ''
     },
     pedidoMinimo: {
-      valor: distributor?.pedidoMinimo.valor || 0,
-      observacoes: distributor?.pedidoMinimo.observacoes || ''
+      valor: distributor?.pedidoMinimo?.valor || 0,
+      observacoes: distributor?.pedidoMinimo?.observacoes || ''
     },
     endereco: {
-      cep: distributor?.endereco.cep || '',
-      logradouro: distributor?.endereco.logradouro || '',
-      numero: distributor?.endereco.numero || '',
-      complemento: distributor?.endereco.complemento || '',
-      bairro: distributor?.endereco.bairro || '',
-      cidade: distributor?.endereco.cidade || '',
-      uf: distributor?.endereco.uf || ''
+      cep: distributor?.endereco?.cep || '',
+      logradouro: distributor?.endereco?.logradouro || '',
+      numero: distributor?.endereco?.numero || '',
+      complemento: distributor?.endereco?.complemento || '',
+      bairro: distributor?.endereco?.bairro || '',
+      cidade: distributor?.endereco?.cidade || '',
+      uf: distributor?.endereco?.uf || ''
     },
     isActive: distributor?.isActive ?? true,
     observacoes: distributor?.observacoes || ''

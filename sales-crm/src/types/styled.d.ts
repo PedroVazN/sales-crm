@@ -12,16 +12,22 @@ declare module 'styled-components' {
       info: string;
       
       background: {
+        main: string;
         primary: string;
         secondary: string;
         tertiary: string;
         card: string;
-        overlay: string;
+        cardHover: string;
+        modal: string;
+        glass: string;
+        glassHover: string;
       };
       
       text: {
         primary: string;
         secondary: string;
+        muted: string;
+        disabled: string;
         tertiary: string;
         inverse: string;
       };
@@ -29,13 +35,24 @@ declare module 'styled-components' {
       border: {
         primary: string;
         secondary: string;
-        accent: string;
+        focus: string;
+        glass: string;
       };
       
-      gradient: {
+      gradients: {
         primary: string;
-        secondary: string;
-        accent: string;
+        background: string;
+        card: string;
+        button: string;
+        glass: string;
+        shimmer: string;
+      };
+      
+      status: {
+        success: string;
+        warning: string;
+        error: string;
+        info: string;
       };
     };
     
@@ -57,17 +74,32 @@ declare module 'styled-components' {
     };
     
     shadows: {
-      sm: string;
-      md: string;
-      lg: string;
-      xl: string;
+      small: string;
+      medium: string;
+      large: string;
       glow: string;
+      glass: string;
+      glassHover: string;
+      card: string;
+      cardHover: string;
     };
     
     breakpoints: {
       mobile: string;
       tablet: string;
       desktop: string;
+    };
+    
+    transitions: {
+      fast: string;
+      normal: string;
+      slow: string;
+    };
+    
+    zIndex: {
+      dropdown: number;
+      modal: number;
+      tooltip: number;
     };
   }
 }

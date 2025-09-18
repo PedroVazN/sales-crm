@@ -13,8 +13,8 @@ export interface ProposalPdfData {
     email: string;
   };
   distributor: {
-    apelido: string;
-    razaoSocial: string;
+    apelido?: string;
+    razaoSocial?: string;
   };
   items: Array<{
     product: {
@@ -98,7 +98,7 @@ export const generateProposalPdf = (data: ProposalPdfData): void => {
   yPosition += 10;
   doc.setFont('helvetica', 'normal');
   doc.text(`Vendedor: ${data.seller.name} (${data.seller.email})`, 20, yPosition);
-  doc.text(`Distribuidor: ${data.distributor.apelido} - ${data.distributor.razaoSocial}`, 20, yPosition + 8);
+  doc.text(`Distribuidor: ${data.distributor.apelido || 'N/A'} - ${data.distributor.razaoSocial || 'N/A'}`, 20, yPosition + 8);
   
   yPosition += 30;
   

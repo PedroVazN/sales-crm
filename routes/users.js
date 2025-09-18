@@ -1,145 +1,47 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+const router = express.Router();
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 const { auth } = require('../middleware/auth');
 
-const router = express.Router();
+// Aplicar middleware de autenticação em todas as rotas
+router.use(auth);
 
-// @route   POST /api/users/register
-// @desc    Registrar novo usuário
-// @access  Public
-router.post('/register', [
-  body('name').trim().isLength({ min: 2 }).withMessage('Nome deve ter pelo menos 2 caracteres'),
-  body('email').isEmail().normalizeEmail().withMessage('Email inválido'),
-  body('password').isLength({ min: 6 }).withMessage('Senha deve ter pelo menos 6 caracteres'),
-  body('role').optional().isIn(['admin', 'vendedor', 'cliente']).withMessage('Role inválida')
-], async (req, res) => {
+// GET /api/users - Listar usuários (apenas admin)
+router.get('/', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
+    // Verificar se é admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
         success: false,
-        message: 'Dados inválidos',
-        errors: errors.array()
+        message: 'Acesso negado. Apenas administradores podem listar usuários.'
       });
     }
 
-    const { name, email, password, role, phone } = req.body;
+    const { page = 1, limit = 20, search = '', role = '' } = req.query;
+    const skip = (page - 1) * limit;
 
-    // Verificar se usuário já existe
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'Usuário já existe com este email'
-      });
-    }
-
-    // Criar novo usuário
-    const user = new User({
-      name,
-      email,
-      password,
-      role: role || 'cliente',
-      phone
-    });
-
-    await user.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'Usuário criado com sucesso',
-      data: user
-    });
-
-  } catch (error) {
-    console.error('Erro ao criar usuário:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
-
-// @route   POST /api/users/login
-// @desc    Login do usuário
-// @access  Public
-router.post('/login', [
-  body('email').isEmail().normalizeEmail().withMessage('Email inválido'),
-  body('password').notEmpty().withMessage('Senha é obrigatória')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Dados inválidos',
-        errors: errors.array()
-      });
-    }
-
-    const { email, password } = req.body;
-
-    // Buscar usuário
-    const user = await User.findOne({ email, isActive: true });
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Credenciais inválidas'
-      });
-    }
-
-    // Verificar senha
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Credenciais inválidas'
-      });
-    }
-
-    // Atualizar último login
-    user.lastLogin = new Date();
-    await user.save();
-
-    res.json({
-      success: true,
-      message: 'Login realizado com sucesso',
-      data: user
-    });
-
-  } catch (error) {
-    console.error('Erro no login:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
-
-// @route   GET /api/users
-// @desc    Listar todos os usuários
-// @access  Private (Admin)
-router.get('/', auth, async (req, res) => {
-  try {
-    const { page = 1, limit = 10, role, search } = req.query;
-    const query = { isActive: true };
-
-    if (role) query.role = role;
+    const filter = {};
+    
     if (search) {
-      query.$or = [
+      filter.$or = [
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } }
       ];
     }
 
-    const users = await User.find(query)
-      .select('-password')
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .sort({ createdAt: -1 });
+    if (role) {
+      filter.role = role;
+    }
 
-    const total = await User.countDocuments(query);
+    const users = await User.find(filter)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip(skip)
+      .lean();
+
+    const total = await User.countDocuments(filter);
 
     res.json({
       success: true,
@@ -150,7 +52,6 @@ router.get('/', auth, async (req, res) => {
         total
       }
     });
-
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
     res.status(500).json({
@@ -160,10 +61,8 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/users/:id
-// @desc    Buscar usuário por ID
-// @access  Private
-router.get('/:id', auth, async (req, res) => {
+// GET /api/users/:id - Buscar usuário por ID
+router.get('/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     
@@ -174,11 +73,18 @@ router.get('/:id', auth, async (req, res) => {
       });
     }
 
+    // Verificar se é o próprio usuário ou admin
+    if (req.user._id !== req.params.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Acesso negado'
+      });
+    }
+
     res.json({
       success: true,
       data: user
     });
-
   } catch (error) {
     console.error('Erro ao buscar usuário:', error);
     res.status(500).json({
@@ -188,22 +94,80 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// @route   PUT /api/users/:id
-// @desc    Atualizar usuário
-// @access  Private
-router.put('/:id', auth, [
-  body('name').optional().trim().isLength({ min: 2 }).withMessage('Nome deve ter pelo menos 2 caracteres'),
-  body('email').optional().isEmail().normalizeEmail().withMessage('Email inválido'),
-  body('phone').optional().trim(),
-  body('role').optional().isIn(['admin', 'vendedor', 'cliente']).withMessage('Role inválida')
-], async (req, res) => {
+// POST /api/users - Criar novo usuário (apenas admin)
+router.post('/', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    // Verificar se é admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Acesso negado. Apenas administradores podem criar usuários.'
+      });
+    }
+
+    const { name, email, password, role = 'vendedor', phone, address } = req.body;
+
+    // Validar dados obrigatórios
+    if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Dados inválidos',
-        errors: errors.array()
+        message: 'Nome, email e senha são obrigatórios'
+      });
+    }
+
+    // Verificar se email já existe
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email já está em uso'
+      });
+    }
+
+    // Hash da senha
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Criar usuário
+    const userData = {
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      phone,
+      address
+    };
+
+    const user = new User(userData);
+    await user.save();
+
+    // Retornar usuário sem senha
+    const userResponse = await User.findById(user._id).select('-password');
+
+    res.status(201).json({
+      success: true,
+      data: userResponse,
+      message: 'Usuário criado com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao criar usuário:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Erro ao criar usuário'
+    });
+  }
+});
+
+// PUT /api/users/:id - Atualizar usuário
+router.put('/:id', async (req, res) => {
+  try {
+    const { name, email, phone, address, isActive } = req.body;
+
+    // Verificar se é o próprio usuário ou admin
+    if (req.user._id !== req.params.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Acesso negado'
       });
     }
 
@@ -215,24 +179,142 @@ router.put('/:id', auth, [
       });
     }
 
-    const { name, email, phone, role, address } = req.body;
-    
+    // Verificar se email já existe (se foi alterado)
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email já está em uso'
+        });
+      }
+    }
+
+    // Atualizar dados
     if (name) user.name = name;
     if (email) user.email = email;
-    if (phone) user.phone = phone;
-    if (role) user.role = role;
+    if (phone !== undefined) user.phone = phone;
     if (address) user.address = address;
+    if (isActive !== undefined && req.user.role === 'admin') user.isActive = isActive;
+
+    await user.save();
+
+    // Retornar usuário atualizado sem senha
+    const updatedUser = await User.findById(user._id).select('-password');
+
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: 'Usuário atualizado com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Erro ao atualizar usuário'
+    });
+  }
+});
+
+// PUT /api/users/:id/password - Alterar senha
+router.put('/:id/password', async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Verificar se é o próprio usuário
+    if (req.user._id !== req.params.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Acesso negado'
+      });
+    }
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Senha atual e nova senha são obrigatórias'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nova senha deve ter pelo menos 6 caracteres'
+      });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    // Verificar senha atual
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Senha atual incorreta'
+      });
+    }
+
+    // Hash da nova senha
+    const saltRounds = 10;
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+    user.password = hashedNewPassword;
 
     await user.save();
 
     res.json({
       success: true,
-      message: 'Usuário atualizado com sucesso',
-      data: user
+      message: 'Senha alterada com sucesso'
     });
-
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
+    console.error('Erro ao alterar senha:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Erro ao alterar senha'
+    });
+  }
+});
+
+// DELETE /api/users/:id - Deletar usuário (apenas admin)
+router.delete('/:id', async (req, res) => {
+  try {
+    // Verificar se é admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Acesso negado. Apenas administradores podem deletar usuários.'
+      });
+    }
+
+    // Não permitir deletar a si mesmo
+    if (req.user._id === req.params.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Você não pode deletar sua própria conta'
+      });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Usuário deletado com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao deletar usuário:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -240,29 +322,38 @@ router.put('/:id', auth, [
   }
 });
 
-// @route   DELETE /api/users/:id
-// @desc    Desativar usuário
-// @access  Private (Admin)
-router.delete('/:id', auth, async (req, res) => {
+// GET /api/users/stats - Estatísticas de usuários (apenas admin)
+router.get('/stats/overview', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({
+    // Verificar se é admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
         success: false,
-        message: 'Usuário não encontrado'
+        message: 'Acesso negado. Apenas administradores podem ver estatísticas.'
       });
     }
 
-    user.isActive = false;
-    await user.save();
+    const totalUsers = await User.countDocuments();
+    const activeUsers = await User.countDocuments({ isActive: true });
+    const adminUsers = await User.countDocuments({ role: 'admin' });
+    const sellerUsers = await User.countDocuments({ role: 'vendedor' });
+    const clientUsers = await User.countDocuments({ role: 'cliente' });
 
     res.json({
       success: true,
-      message: 'Usuário desativado com sucesso'
+      data: {
+        total: totalUsers,
+        active: activeUsers,
+        inactive: totalUsers - activeUsers,
+        byRole: {
+          admin: adminUsers,
+          vendedor: sellerUsers,
+          cliente: clientUsers
+        }
+      }
     });
-
   } catch (error) {
-    console.error('Erro ao desativar usuário:', error);
+    console.error('Erro ao buscar estatísticas:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

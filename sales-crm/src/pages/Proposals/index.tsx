@@ -255,8 +255,8 @@ export const Proposals: React.FC = () => {
         },
         distributor: {
           _id: selectedDistributorData._id,
-          apelido: selectedDistributorData.apelido,
-          razaoSocial: selectedDistributorData.razaoSocial
+          apelido: selectedDistributorData.apelido || selectedDistributorData.name || '',
+          razaoSocial: selectedDistributorData.razaoSocial || selectedDistributorData.name || ''
         },
         items: selectedProducts.map(item => ({
           product: products.find(p => p._id === item.productId)!,
@@ -342,7 +342,8 @@ export const Proposals: React.FC = () => {
       proposal.client.name.toLowerCase().includes(search) ||
       proposal.client.company?.toLowerCase().includes(search) ||
       proposal.seller.name.toLowerCase().includes(search) ||
-      proposal.distributor.apelido.toLowerCase().includes(search)
+      (proposal.distributor.apelido || '').toLowerCase().includes(search) ||
+      (proposal.distributor.razaoSocial || '').toLowerCase().includes(search)
     );
   });
 
@@ -443,9 +444,9 @@ export const Proposals: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div style={{ fontWeight: 'bold' }}>{proposal.distributor.apelido}</div>
+                          <div style={{ fontWeight: 'bold' }}>{proposal.distributor.apelido || 'N/A'}</div>
                           <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                            {proposal.distributor.razaoSocial}
+                            {proposal.distributor.razaoSocial || 'N/A'}
                           </div>
                         </div>
                       </TableCell>
@@ -609,7 +610,7 @@ export const Proposals: React.FC = () => {
                     <option value="">Selecione o distribuidor</option>
                     {distributors.map(distributor => (
                       <option key={distributor._id} value={distributor._id}>
-                        {distributor.apelido} - {distributor.razaoSocial}
+                        {distributor.apelido || distributor.name || 'N/A'} - {distributor.razaoSocial || distributor.name || 'N/A'}
                       </option>
                     ))}
                   </Select>

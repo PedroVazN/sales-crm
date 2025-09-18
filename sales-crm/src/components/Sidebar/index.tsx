@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   BarChart3, 
-  Users, 
+  Users as UsersIcon, 
   TrendingUp, 
   FileText, 
   Target,
@@ -14,7 +14,9 @@ import {
   UserCheck,
   Truck,
   FileSpreadsheet,
-  DollarSign
+  DollarSign,
+  UserPlus,
+  User
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
@@ -58,7 +60,7 @@ export const Sidebar: React.FC = () => {
       items: [
         { icon: <BarChart3 size={20} />, label: 'Dashboard', path: '/', permission: 'dashboard' },
         ...(hasPermission('admin') ? [
-          { icon: <Users size={20} />, label: 'Leads', path: '/leads', permission: 'admin' },
+          { icon: <UsersIcon size={20} />, label: 'Leads', path: '/leads', permission: 'admin' },
           { icon: <TrendingUp size={20} />, label: 'Vendas', path: '/sales', permission: 'admin' },
           { icon: <FileText size={20} />, label: 'Relatórios', path: '/reports', permission: 'admin' },
           { icon: <Target size={20} />, label: 'Metas', path: '/goals', permission: 'admin' },
@@ -74,7 +76,7 @@ export const Sidebar: React.FC = () => {
       ]
     }] : []),
     {
-      title: 'GESTÃO',
+      title: user?.role === 'vendedor' ? 'PROPOSTAS' : 'GESTÃO',
       items: [
         ...(hasPermission('admin') ? [
           { icon: <Package size={20} />, label: 'Produtos', path: '/products', permission: 'admin' },
@@ -85,13 +87,21 @@ export const Sidebar: React.FC = () => {
         { icon: <FileSpreadsheet size={20} />, label: 'Propostas', path: '/proposals', permission: 'proposals' },
       ]
     },
-    ...(hasPermission('admin') ? [{
-      title: 'SISTEMA',
+        ...(hasPermission('admin') ? [{
+          title: 'SISTEMA',
+          items: [
+            { icon: <UsersIcon size={20} />, label: 'Usuários', path: '/users', permission: 'admin' },
+            { icon: <UserPlus size={20} />, label: 'Cadastrar Usuário', path: '/users/register', permission: 'admin' },
+            { icon: <Bell size={20} />, label: 'Notificações', path: '/notifications', permission: 'admin' },
+            { icon: <Settings size={20} />, label: 'Configurações', path: '/configurations', permission: 'admin' },
+          ]
+        }] : []),
+    {
+      title: 'PERFIL',
       items: [
-        { icon: <Bell size={20} />, label: 'Notificações', path: '/notifications', permission: 'admin' },
-        { icon: <Settings size={20} />, label: 'Configurações', path: '/configurations', permission: 'admin' },
+        { icon: <User size={20} />, label: 'Meu Perfil', path: '/profile', permission: 'profile' },
       ]
-    }] : [])
+    }
   ];
 
   return (

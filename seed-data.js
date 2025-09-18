@@ -19,7 +19,7 @@ async function seedData() {
     
     if (!existingUser) {
       adminUser = new User({
-        name: 'Administrador',
+        name: 'Matheus Dantas',
         email: 'admin@sellone.com',
         password: '12345',
         role: 'admin',

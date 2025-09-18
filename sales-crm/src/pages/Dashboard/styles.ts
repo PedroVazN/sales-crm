@@ -2,10 +2,11 @@ import styled from 'styled-components';
 
 export const Container = styled.div`
   padding: ${({ theme }) => theme.spacing.xxl};
-  background: ${({ theme }) => theme.colors.gradients.background};
+  background: #0f172a;
   min-height: 100vh;
   position: relative;
   animation: fadeIn 0.8s ease-out;
+  overflow-x: hidden;
   
   &::before {
     content: '';
@@ -15,12 +16,27 @@ export const Container = styled.div`
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, rgba(245, 158, 11, 0.03) 0%, transparent 50%);
+      radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
     pointer-events: none;
+    animation: backgroundShift 20s ease-in-out infinite;
   }
 
+  @keyframes backgroundShift {
+    0%, 100% {
+      transform: translateX(0) translateY(0);
+    }
+    25% {
+      transform: translateX(-10px) translateY(-5px);
+    }
+    50% {
+      transform: translateX(5px) translateY(-10px);
+    }
+    75% {
+      transform: translateX(-5px) translateY(5px);
+    }
+  }
 `;
 
 export const Header = styled.div`
@@ -33,10 +49,12 @@ export const Header = styled.div`
 export const Title = styled.h1`
   font-size: 2.5rem;
   font-weight: 800;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: #f8fafc;
   margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
   letter-spacing: -1px;
   position: relative;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  animation: titleGlow 3s ease-in-out infinite alternate;
   
   &::after {
     content: '';
@@ -45,8 +63,27 @@ export const Title = styled.h1`
     left: 0;
     width: 80px;
     height: 3px;
-    background: ${({ theme }) => theme.colors.primary};
+    background: linear-gradient(135deg, #3b82f6, #10b981);
     border-radius: 3px;
+    animation: underlineGlow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes titleGlow {
+    0% {
+      filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.3));
+    }
+    100% {
+      filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.6));
+    }
+  }
+  
+  @keyframes underlineGlow {
+    0% {
+      box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+    }
+    100% {
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+    }
   }
 `;
 
@@ -70,28 +107,20 @@ export const MetricsGrid = styled.div`
 `;
 
 export const MetricCard = styled.div`
-  background: ${({ theme }) => theme.colors.background.card};
-  border: 1px solid ${({ theme }) => theme.colors.border.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  padding: ${({ theme }) => theme.spacing.lg};
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  border-radius: 16px;
+  padding: 24px;
   backdrop-filter: blur(20px);
   box-shadow: 
-    ${({ theme }) => theme.shadows.medium},
-    0 0 0 1px ${({ theme }) => theme.colors.border.primary},
+    0 4px 6px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: all ${({ theme }) => theme.transitions.normal};
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   animation: scaleIn 0.6s ease-out both;
 
-  &:hover {
-    transform: translateY(-6px) scale(1.01);
-    box-shadow: 
-      ${({ theme }) => theme.shadows.glow},
-      0 0 0 1px ${({ theme }) => theme.colors.border.secondary},
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  }
-  
   &::before {
     content: '';
     position: absolute;
@@ -99,27 +128,44 @@ export const MetricCard = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: ${({ theme }) => theme.colors.gradients.card};
-    border-radius: ${({ theme }) => theme.borderRadius.lg};
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
+    border-radius: 16px;
     z-index: -1;
+    opacity: 0;
+    transition: all 0.3s ease;
   }
 
   &::after {
     content: '';
     position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: ${({ theme }) => theme.colors.gradients.primary};
-    border-radius: ${({ theme }) => theme.borderRadius.lg};
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+    border-radius: 16px;
     z-index: -2;
     opacity: 0;
-    transition: opacity ${({ theme }) => theme.transitions.normal};
+    transition: all 0.3s ease;
+    transform: scale(0.95);
   }
 
-  &:hover::after {
-    opacity: 0.1;
+  &:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(71, 85, 105, 0.5);
+    box-shadow: 
+      0 20px 40px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    
+    &::before {
+      opacity: 1;
+    }
+    
+    &::after {
+      opacity: 0.3;
+      transform: scale(1);
+    }
   }
 
   &:nth-child(1) { animation-delay: 0.1s; }

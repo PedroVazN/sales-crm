@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Truck, Plus, Search, Filter, Edit, Trash2, Loader2 } from 'lucide-react';
 import { apiService, Distributor } from '../../services/api';
 import { DistributorModal } from '../../components/DistributorModal';
@@ -25,6 +26,7 @@ import {
 } from './styles';
 
 export const Distributors: React.FC = () => {
+  const navigate = useNavigate();
   const [distributors, setDistributors] = useState<Distributor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export const Distributors: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDistributor, setEditingDistributor] = useState<Distributor | null>(null);
 
-  const loadDistributors = async () => {
+  const loadDistributors = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -44,18 +46,18 @@ export const Distributors: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm]);
 
   useEffect(() => {
     loadDistributors();
-  }, [searchTerm]);
+  }, [loadDistributors]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
   const handleDeleteDistributor = async (distributor: Distributor) => {
-    if (window.confirm(`Tem certeza que deseja excluir o distribuidor ${distributor.apelido}?`)) {
+    if (window.confirm(`Tem certeza que deseja excluir o distribuidor ${distributor.apelido || distributor.name || 'N/A'}?`)) {
       try {
         await apiService.deleteDistributor(distributor._id);
         loadDistributors();
@@ -67,8 +69,7 @@ export const Distributors: React.FC = () => {
   };
 
   const handleCreateDistributor = () => {
-    setEditingDistributor(null);
-    setIsModalOpen(true);
+    navigate('/distributors/register');
   };
 
   const handleEditDistributor = (distributor: Distributor) => {
@@ -158,7 +159,7 @@ export const Distributors: React.FC = () => {
             <Search size={20} />
             <SearchInput 
               placeholder="Pesquisar distribuidores..." 
-              value={searchTerm}
+              value={searchTerm || ''}
               onChange={handleSearch}
             />
           </SearchContainer>
@@ -202,23 +203,23 @@ export const Distributors: React.FC = () => {
                 <TableRow key={distributor._id}>
                   <TableCell>
                     <div>
-                      <strong>{distributor.apelido}</strong>
+                      <strong>{distributor.apelido || distributor.name || 'N/A'}</strong>
                     </div>
                   </TableCell>
-                  <TableCell>{distributor.razaoSocial}</TableCell>
-                  <TableCell>{distributor.idDistribuidor}</TableCell>
+                  <TableCell>{distributor.razaoSocial || distributor.name || 'N/A'}</TableCell>
+                  <TableCell>{distributor.idDistribuidor || 'N/A'}</TableCell>
                   <TableCell>
                     <div>
-                      <div>{distributor.contato.nome}</div>
+                      <div>{distributor.contato?.nome || distributor.contactPerson?.name || 'N/A'}</div>
                       <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                        {distributor.contato.email}
+                        {distributor.contato?.email || distributor.email || 'N/A'}
                       </div>
                       <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                        {formatPhone(distributor.contato.telefone)}
+                        {distributor.contato?.telefone ? formatPhone(distributor.contato.telefone) : distributor.phone || 'N/A'}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{distributor.origem}</TableCell>
+                  <TableCell>{distributor.origem || distributor.address?.city || 'N/A'}</TableCell>
                   <TableCell>
                     <StatusBadge $isActive={distributor.isActive}>
                       {distributor.isActive ? 'Ativo' : 'Inativo'}

@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { Bell, Search, User, LogOut } from 'lucide-react';
+import { Search, User, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { NotificationBell } from '../NotificationBell';
 import { 
   Container, 
   SearchContainer, 
   SearchInput, 
   ActionsContainer, 
-  NotificationButton, 
   UserButton,
-  NotificationBadge,
   UserMenu,
   UserMenuItem
 } from './styles';
@@ -32,10 +31,7 @@ export const Header: React.FC = () => {
       </SearchContainer>
       
       <ActionsContainer>
-        <NotificationButton>
-          <Bell size={20} />
-          <NotificationBadge>3</NotificationBadge>
-        </NotificationButton>
+        <NotificationBell />
         
         <UserButton onClick={() => setShowUserMenu(!showUserMenu)}>
           <User size={20} />

@@ -1,18 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, LogIn, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Loader2, Sparkles, Shield, Zap, Star } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   Container, 
+  Background,
+  AbstractShapes,
+  Shape1,
+  Shape2,
+  Shape3,
+  Shape4,
+  Shape5,
   LoginCard, 
-  Logo, 
-  Title, 
-  Subtitle, 
+  Logo,
   Form, 
   InputGroup, 
+  Label,
   Input, 
   PasswordToggle, 
-  LoginButton, 
+  LoginButton,
+  LoginIcon,
   Footer,
   ErrorMessage,
   SuccessMessage
@@ -25,8 +32,34 @@ export const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, size: number, speed: number}>>([]);
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  // Criar partículas animadas
+  useEffect(() => {
+    const newParticles = Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: Math.random() * 4 + 1,
+      speed: Math.random() * 2 + 0.5
+    }));
+    setParticles(newParticles);
+  }, []);
+
+  // Animar partículas
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setParticles(prev => prev.map(particle => ({
+        ...particle,
+        y: particle.y > window.innerHeight ? -10 : particle.y + particle.speed,
+        x: particle.x + Math.sin(particle.y * 0.01) * 0.5
+      })));
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,23 +88,30 @@ export const Login: React.FC = () => {
 
   return (
     <Container>
+      <Background />
+      
+      <AbstractShapes>
+        <Shape1 />
+        <Shape2 />
+        <Shape3 />
+        <Shape4 />
+        <Shape5 />
+      </AbstractShapes>
+
       <LoginCard>
         <Logo>
-          <h1>Sell.On</h1>
-          <span>CRM</span>
+          <h1>Sell.On™</h1>
         </Logo>
-        
-        <Title>Bem-vindo de volta</Title>
-        <Subtitle>Faça login para acessar sua conta</Subtitle>
         
         <Form onSubmit={handleSubmit}>
           {error && <ErrorMessage>{error}</ErrorMessage>}
           {success && <SuccessMessage>{success}</SuccessMessage>}
           
           <InputGroup>
+            <Label>EMAIL ADDRESS</Label>
             <Input
               type="email"
-              placeholder="EMAIL / USUÁRIO"
+              placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -80,9 +120,10 @@ export const Login: React.FC = () => {
           </InputGroup>
           
           <InputGroup>
+            <Label>PASSWORD</Label>
             <Input
               type={showPassword ? 'text' : 'password'}
-              placeholder="SENHA"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -93,18 +134,20 @@ export const Login: React.FC = () => {
               onClick={() => setShowPassword(!showPassword)}
               disabled={isLoading}
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </PasswordToggle>
           </InputGroup>
           
           <LoginButton type="submit" disabled={isLoading}>
-            {isLoading ? <Loader2 size={20} className="animate-spin" /> : <LogIn size={20} />}
-            {isLoading ? 'ENTRANDO...' : 'ENTRAR'}
+            <span>LOG IN</span>
+            <LoginIcon>
+              {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Shield size={16} />}
+            </LoginIcon>
           </LoginButton>
         </Form>
         
         <Footer>
-          <p>Esqueceu sua senha? <a href="#">Recuperar</a></p>
+          <a href="#">FORGOT YOUR PASSWORD?</a>
         </Footer>
       </LoginCard>
     </Container>

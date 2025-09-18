@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { UserCheck, Plus, Search, Filter, Edit, Trash2, Eye, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { UserCheck, Plus, Search, Filter, Edit, Trash2, Loader2 } from 'lucide-react';
 import { apiService, Client } from '../../services/api';
 import { ClientModal } from '../../components/ClientModal';
 import { 
@@ -25,6 +26,7 @@ import {
 } from './styles';
 
 export const Clients: React.FC = () => {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export const Clients: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
 
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -44,19 +46,18 @@ export const Clients: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm]);
 
   useEffect(() => {
     loadClients();
-  }, [searchTerm]);
+  }, [searchTerm, loadClients]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
   const handleCreateClient = () => {
-    setEditingClient(null);
-    setShowModal(true);
+    navigate('/clients/register');
   };
 
   const handleEditClient = (client: Client) => {
@@ -158,7 +159,7 @@ export const Clients: React.FC = () => {
             <Search size={20} />
             <SearchInput 
               placeholder="Pesquisar clientes..." 
-              value={searchTerm}
+              value={searchTerm || ''}
               onChange={handleSearch}
             />
           </SearchContainer>

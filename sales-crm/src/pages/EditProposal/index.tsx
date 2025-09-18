@@ -54,8 +54,8 @@ interface ProposalFormData {
   };
   distributor: {
     _id: string;
-    apelido: string;
-    razaoSocial: string;
+    apelido?: string;
+    razaoSocial?: string;
   };
   items: ProposalItem[];
   paymentCondition: string;
@@ -234,8 +234,8 @@ export const EditProposal: React.FC = () => {
         ...prev,
         distributor: {
           _id: distributor._id,
-          apelido: distributor.apelido,
-          razaoSocial: distributor.razaoSocial
+          apelido: distributor.apelido || distributor.name || '',
+          razaoSocial: distributor.razaoSocial || distributor.name || ''
         }
       }));
     }
@@ -556,7 +556,7 @@ export const EditProposal: React.FC = () => {
                 <option value="">Selecione um distribuidor</option>
                 {distributors.map(distributor => (
                   <option key={distributor._id} value={distributor._id}>
-                    {distributor.apelido} - {distributor.razaoSocial}
+                    {distributor.apelido || distributor.name || 'N/A'} - {distributor.razaoSocial || distributor.name || 'N/A'}
                   </option>
                 ))}
               </Select>

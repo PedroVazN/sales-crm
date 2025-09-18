@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Package, Plus, Search, Filter, Edit, Trash2, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { apiService, Product } from '../../services/api';
 import { 
   Container, 
@@ -24,12 +25,13 @@ import {
 } from './styles';
 
 export const Products: React.FC = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -41,14 +43,18 @@ export const Products: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm]);
 
   useEffect(() => {
     loadProducts();
-  }, [searchTerm]);
+  }, [loadProducts]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+  };
+
+  const handleCreateProduct = () => {
+    navigate('/products/create');
   };
 
   const handleDeleteProduct = async (product: Product) => {
@@ -70,11 +76,6 @@ export const Products: React.FC = () => {
     }).format(price);
   };
 
-  const getStockStatus = (current: number, min: number) => {
-    if (current === 0) return { status: 'Esgotado', color: '#ef4444' };
-    if (current <= min) return { status: 'Baixo', color: '#f59e0b' };
-    return { status: 'Disponível', color: '#10b981' };
-  };
 
   if (loading) {
     return (
@@ -153,7 +154,7 @@ export const Products: React.FC = () => {
             <Filter size={20} />
             Filtros
           </FilterButton>
-          <CreateButton>
+          <CreateButton onClick={handleCreateProduct}>
             <Plus size={20} />
             Novo Produto
           </CreateButton>
@@ -166,7 +167,7 @@ export const Products: React.FC = () => {
             <Package size={48} />
             <h3>Nenhum produto encontrado</h3>
             <p>Comece criando seu primeiro produto</p>
-            <CreateButton>
+            <CreateButton onClick={handleCreateProduct}>
               <Plus size={20} />
               Novo Produto
             </CreateButton>
@@ -178,15 +179,12 @@ export const Products: React.FC = () => {
                 <TableCell>Produto</TableCell>
                 <TableCell>Categoria</TableCell>
                 <TableCell>Preço</TableCell>
-                <TableCell>Estoque</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Ações</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody>
               {products.map((product) => {
-                const stockStatus = getStockStatus(product.stock.current, product.stock.min);
-                
                 return (
                   <TableRow key={product._id}>
                     <TableCell>
@@ -204,23 +202,6 @@ export const Products: React.FC = () => {
                       <strong style={{ color: '#10b981' }}>
                         {formatPrice(product.price)}
                       </strong>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div style={{ fontWeight: 600 }}>
-                          {product.stock.current} unidades
-                        </div>
-                        <div style={{ 
-                          fontSize: '0.9rem', 
-                          color: stockStatus.color,
-                          fontWeight: 500
-                        }}>
-                          {stockStatus.status}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: '#666' }}>
-                          Mín: {product.stock.min}
-                        </div>
-                      </div>
                     </TableCell>
                     <TableCell>
                       <StatusBadge $isActive={product.isActive}>

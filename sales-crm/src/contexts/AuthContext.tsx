@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
+  updateUser: (userData: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -116,12 +117,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Admin tem acesso a tudo
     if (user.role === 'admin') return true;
 
-    // Vendedor só tem acesso a propostas
+    // Vendedor só tem acesso a propostas e dashboard
     if (user.role === 'vendedor') {
-      return permission === 'proposals' || permission === 'dashboard';
+      const allowedPermissions = ['proposals', 'dashboard'];
+      return allowedPermissions.includes(permission);
     }
 
     return false;
+  };
+
+  const updateUser = (userData: User) => {
+    setUser(userData);
   };
 
   const value: AuthContextType = {
@@ -130,7 +136,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading,
     login,
     logout,
-    hasPermission
+    hasPermission,
+    updateUser
   };
 
   return (

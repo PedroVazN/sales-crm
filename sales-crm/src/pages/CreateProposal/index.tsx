@@ -54,8 +54,8 @@ interface ProposalFormData {
   };
   distributor: {
     _id: string;
-    apelido: string;
-    razaoSocial: string;
+    apelido?: string;
+    razaoSocial?: string;
   };
   items: ProposalItem[];
   paymentCondition: string;
@@ -189,8 +189,8 @@ export const CreateProposal: React.FC = () => {
         ...prev,
         distributor: {
           _id: distributor._id,
-          apelido: distributor.apelido,
-          razaoSocial: distributor.razaoSocial
+          apelido: distributor.apelido || distributor.name || '',
+          razaoSocial: distributor.razaoSocial || distributor.name || ''
         }
       }));
     }
@@ -358,7 +358,7 @@ export const CreateProposal: React.FC = () => {
       setGeneratingPdf(true);
       
       // Validar se há dados suficientes para gerar PDF
-      if (!formData.client.name || !formData.seller.name || !formData.distributor.apelido) {
+      if (!formData.client.name || !formData.seller.name || !formData.distributor._id) {
         alert('Preencha os dados básicos antes de gerar o PDF');
         return;
       }
@@ -498,7 +498,7 @@ export const CreateProposal: React.FC = () => {
                 <option value="">Selecione um distribuidor</option>
                 {distributors.map(distributor => (
                   <option key={distributor._id} value={distributor._id}>
-                    {distributor.apelido} - {distributor.razaoSocial}
+                    {distributor.apelido || distributor.name || 'N/A'} - {distributor.razaoSocial || distributor.name || 'N/A'}
                   </option>
                 ))}
               </Select>

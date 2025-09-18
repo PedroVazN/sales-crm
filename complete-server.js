@@ -7,21 +7,50 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: ['http://localhost:3001', 'http://localhost:3000'],
   credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Carregar variáveis de ambiente
+require('dotenv').config();
+
 // Conexão com MongoDB
 const connectDB = async () => {
   try {
-    const mongoUri = 'mongodb://localhost:27017/sellone';
-    const conn = await mongoose.connect(mongoUri);
-    console.log(`✅ MongoDB conectado: ${conn.connection.host}`);
+    // MongoDB Atlas - usar variável de ambiente
+    const atlasUri = process.env.MONGODB_URI;
+    
+    if (!atlasUri) {
+      console.error('❌ MONGODB_URI não encontrada no arquivo .env');
+      console.log('💡 Crie um arquivo .env com: MONGODB_URI=sua_string_de_conexao');
+      process.exit(1);
+    }
+    
+    // MongoDB local como fallback
+    const localUri = 'mongodb://localhost:27017/sellone';
+    
+    // Tentar primeiro MongoDB Atlas
+    try {
+      const conn = await mongoose.connect(atlasUri);
+      console.log(`✅ MongoDB Atlas conectado: ${conn.connection.host}`);
+      return;
+    } catch (atlasError) {
+      console.log('⚠️  MongoDB Atlas não disponível, tentando local...');
+      console.log(`   Erro Atlas: ${atlasError.message}`);
+    }
+    
+    // Tentar conectar com MongoDB local como fallback
+    const conn = await mongoose.connect(localUri);
+    console.log(`✅ MongoDB local conectado: ${conn.connection.host}`);
   } catch (error) {
     console.error('❌ Erro ao conectar com MongoDB:', error.message);
-    console.log('💡 Verifique se o MongoDB está rodando localmente');
+    console.log('💡 Dicas para resolver:');
+    console.log('   1. Verifique se as credenciais do Atlas estão corretas no .env');
+    console.log('   2. Configure o IP no MongoDB Atlas: https://www.mongodb.com/docs/atlas/security-whitelist/');
+    console.log('   3. Ou instale MongoDB local: https://www.mongodb.com/try/download/community');
+    console.log('   4. Verifique se a string MONGODB_URI está correta');
     process.exit(1);
   }
 };
@@ -418,6 +447,93 @@ app.get('/api/products', async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao buscar produtos:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// POST /api/products - Criar produto
+app.post('/api/products', async (req, res) => {
+  try {
+    // Gerar SKU único se estiver vazio
+    let sku = req.body.sku;
+    if (!sku || sku.trim() === '') {
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+      sku = `PROD-${timestamp}-${random}`;
+    }
+    
+    const productData = {
+      ...req.body,
+      sku: sku,
+      createdBy: {
+        _id: '1',
+        name: 'Administrador',
+        email: 'admin@sellone.com'
+      }
+    };
+    
+    const product = new Product(productData);
+    const savedProduct = await product.save();
+    
+    res.status(201).json({
+      success: true,
+      data: savedProduct,
+      message: 'Produto criado com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao criar produto:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// PUT /api/products/:id - Atualizar produto
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    
+    if (!product) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Produto não encontrado' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: product,
+      message: 'Produto atualizado com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar produto:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// DELETE /api/products/:id - Deletar produto
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    
+    if (!product) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Produto não encontrado' 
+      });
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
+    
+    res.json({ 
+      success: true,
+      message: 'Produto deletado com sucesso',
+      deletedId: req.params.id
+    });
+  } catch (error) {
+    console.error('Erro ao deletar produto:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
@@ -1072,15 +1188,30 @@ app.delete('/api/proposals/:id', async (req, res) => {
   }
 });
 
-// Servir arquivos estáticos do frontend
-app.use(express.static(path.join(__dirname, 'sales-crm/build')));
+// Importar e usar as rotas de clientes
+const clientsRouter = require('./routes/clients');
+app.use('/api/clients', clientsRouter);
 
-// Rota para servir o React app
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'sales-crm/build', 'index.html'));
+// Importar e usar as rotas de eventos
+const eventsRouter = require('./routes/events');
+app.use('/api/events', eventsRouter);
+
+// Importar e usar as rotas de metas
+const goalsRouter = require('./routes/goals');
+app.use('/api/goals', goalsRouter);
+
+const notificationsRouter = require('./routes/notifications');
+app.use('/api/notifications', notificationsRouter);
+
+const usersRouter = require('./routes/users');
+app.use('/api/users', usersRouter);
+
+// Rota de health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'API funcionando' });
 });
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor SellOne funcionando na porta ${PORT}`);

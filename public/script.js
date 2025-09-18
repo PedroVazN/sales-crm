@@ -254,6 +254,9 @@ async function loadProducts() {
                 const productCard = createProductCard(product);
                 productsGrid.appendChild(productCard);
             });
+            
+            // Animar cards após carregamento
+            setTimeout(() => animateCards(), 100);
         } else {
             productsGrid.innerHTML = '<div class="loading">Erro ao carregar produtos</div>';
         }
@@ -307,6 +310,9 @@ async function loadSales() {
                 const saleCard = createSaleCard(sale);
                 salesGrid.appendChild(saleCard);
             });
+            
+            // Animar cards após carregamento
+            setTimeout(() => animateCards(), 100);
         } else {
             salesGrid.innerHTML = '<div class="loading">Erro ao carregar vendas</div>';
         }
@@ -361,6 +367,9 @@ async function loadUsers() {
                 const userCard = createUserCard(user);
                 usersGrid.appendChild(userCard);
             });
+            
+            // Animar cards após carregamento
+            setTimeout(() => animateCards(), 100);
         } else {
             usersGrid.innerHTML = '<div class="loading">Erro ao carregar usuários</div>';
         }
@@ -513,13 +522,28 @@ document.addEventListener('DOMContentLoaded', function() {
 // Animações de entrada
 function animateIn(element) {
     element.style.opacity = '0';
-    element.style.transform = 'translateY(20px)';
+    element.style.transform = 'translateY(30px) scale(0.95)';
     
     setTimeout(() => {
-        element.style.transition = 'all 0.5s ease';
+        element.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
         element.style.opacity = '1';
-        element.style.transform = 'translateY(0)';
+        element.style.transform = 'translateY(0) scale(1)';
     }, 100);
+}
+
+// Animação de entrada para cards
+function animateCards() {
+    const cards = document.querySelectorAll('.item-card, .stat-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
 }
 
 // Aplicar animações quando as páginas são mostradas

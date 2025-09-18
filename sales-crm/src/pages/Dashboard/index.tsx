@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';
 import { 
   Container, 
@@ -64,10 +65,16 @@ const topProducts = [
   { name: 'Nenhum produto vendido', sales: 0, revenue: 0 },
 ];
 
-const goals = [
+const adminGoals = [
   { name: 'Meta Individual', progress: 0, color: '#3B82F6' },
   { name: 'Meta da Equipe', progress: 0, color: '#10B981' },
   { name: 'Meta Trimestral', progress: 0, color: '#F59E0B' },
+];
+
+const vendedorGoals = [
+  { name: 'Propostas Criadas', progress: 0, color: '#3B82F6' },
+  { name: 'Propostas Aprovadas', progress: 0, color: '#10B981' },
+  { name: 'Meta de Conversão', progress: 0, color: '#F59E0B' },
 ];
 
 interface DashboardData {
@@ -89,6 +96,7 @@ interface DashboardData {
 }
 
 export const Dashboard: React.FC = () => {
+  const { user } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -172,39 +180,81 @@ export const Dashboard: React.FC = () => {
     <Container>
       <Header>
         <Title>Dashboard</Title>
-        <Subtitle>Visão geral das suas vendas e performance</Subtitle>
+        <Subtitle>
+          {user?.role === 'vendedor' 
+            ? 'Suas propostas e performance de vendas' 
+            : 'Visão geral das suas vendas e performance'
+          }
+        </Subtitle>
       </Header>
 
       <MetricsGrid>
-        <MetricCard>
-          <MetricValue>R$ {data?.totalRevenue.toLocaleString('pt-BR') || '0'}</MetricValue>
-          <MetricLabel>Receita Total</MetricLabel>
-          <MetricChange $positive>+0% vs mês anterior</MetricChange>
-        </MetricCard>
+        {user?.role === 'vendedor' ? (
+          <>
+            <MetricCard>
+              <MetricValue>0</MetricValue>
+              <MetricLabel>Propostas Criadas</MetricLabel>
+              <MetricChange $positive>+0% este mês</MetricChange>
+            </MetricCard>
 
-        <MetricCard>
-          <MetricValue>{data?.totalUsers || 0}</MetricValue>
-          <MetricLabel>Usuários</MetricLabel>
-          <MetricChange $positive>+0% novos usuários</MetricChange>
-        </MetricCard>
+            <MetricCard>
+              <MetricValue>0</MetricValue>
+              <MetricLabel>Propostas Aprovadas</MetricLabel>
+              <MetricChange $positive>+0% taxa de conversão</MetricChange>
+            </MetricCard>
 
-        <MetricCard>
-          <MetricValue>{data?.totalSales || 0}</MetricValue>
-          <MetricLabel>Vendas Fechadas</MetricLabel>
-          <MetricChange $positive>+0% este mês</MetricChange>
-        </MetricCard>
+            <MetricCard>
+              <MetricValue>R$ 0</MetricValue>
+              <MetricLabel>Valor Total Propostas</MetricLabel>
+              <MetricChange $positive>+0% vs mês anterior</MetricChange>
+            </MetricCard>
 
-        <MetricCard>
-          <MetricValue>{data?.totalProducts || 0}</MetricValue>
-          <MetricLabel>Produtos</MetricLabel>
-          <MetricChange $positive>+0% novos produtos</MetricChange>
-        </MetricCard>
+            <MetricCard>
+              <MetricValue>0</MetricValue>
+              <MetricLabel>Clientes Atendidos</MetricLabel>
+              <MetricChange $positive>+0% novos clientes</MetricChange>
+            </MetricCard>
+          </>
+        ) : (
+          <>
+            <MetricCard>
+              <MetricValue>R$ {data?.totalRevenue.toLocaleString('pt-BR') || '0'}</MetricValue>
+              <MetricLabel>Receita Total</MetricLabel>
+              <MetricChange $positive>+0% vs mês anterior</MetricChange>
+            </MetricCard>
+
+            <MetricCard>
+              <MetricValue>{data?.totalUsers || 0}</MetricValue>
+              <MetricLabel>Usuários</MetricLabel>
+              <MetricChange $positive>+0% novos usuários</MetricChange>
+            </MetricCard>
+
+            <MetricCard>
+              <MetricValue>{data?.totalSales || 0}</MetricValue>
+              <MetricLabel>Vendas Fechadas</MetricLabel>
+              <MetricChange $positive>+0% este mês</MetricChange>
+            </MetricCard>
+
+            <MetricCard>
+              <MetricValue>{data?.totalProducts || 0}</MetricValue>
+              <MetricLabel>Produtos</MetricLabel>
+              <MetricChange $positive>+0% novos produtos</MetricChange>
+            </MetricCard>
+          </>
+        )}
       </MetricsGrid>
 
       <ChartsGrid>
         <ChartCard>
-          <ChartTitle>Performance de Vendas</ChartTitle>
-          <ChartSubtitle>Evolução mensal de vendas e receita</ChartSubtitle>
+          <ChartTitle>
+            {user?.role === 'vendedor' ? 'Performance de Propostas' : 'Performance de Vendas'}
+          </ChartTitle>
+          <ChartSubtitle>
+            {user?.role === 'vendedor' 
+              ? 'Evolução mensal de propostas criadas e aprovadas' 
+              : 'Evolução mensal de vendas e receita'
+            }
+          </ChartSubtitle>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={salesData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
@@ -237,8 +287,15 @@ export const Dashboard: React.FC = () => {
         </ChartCard>
 
         <ChartCard>
-          <ChartTitle>Receita Mensal (R$)</ChartTitle>
-          <ChartSubtitle>Evolução da receita por mês</ChartSubtitle>
+          <ChartTitle>
+            {user?.role === 'vendedor' ? 'Valor das Propostas (R$)' : 'Receita Mensal (R$)'}
+          </ChartTitle>
+          <ChartSubtitle>
+            {user?.role === 'vendedor' 
+              ? 'Evolução do valor das propostas por mês' 
+              : 'Evolução da receita por mês'
+            }
+          </ChartSubtitle>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
@@ -270,8 +327,15 @@ export const Dashboard: React.FC = () => {
 
       <ChartsGrid>
         <ChartCard>
-          <ChartTitle>Produtos Mais Vendidos</ChartTitle>
-          <ChartSubtitle>Top 5 produtos do mês</ChartSubtitle>
+          <ChartTitle>
+            {user?.role === 'vendedor' ? 'Propostas Recentes' : 'Produtos Mais Vendidos'}
+          </ChartTitle>
+          <ChartSubtitle>
+            {user?.role === 'vendedor' 
+              ? 'Suas últimas propostas criadas' 
+              : 'Top 5 produtos do mês'
+            }
+          </ChartSubtitle>
           <ProductsList>
             {data?.topProducts.map((product, index) => (
               <ProductItem key={index}>
@@ -284,10 +348,17 @@ export const Dashboard: React.FC = () => {
         </ChartCard>
 
         <ChartCard>
-          <ChartTitle>Metas de Vendas</ChartTitle>
-          <ChartSubtitle>Progresso das metas mensais</ChartSubtitle>
+          <ChartTitle>
+            {user?.role === 'vendedor' ? 'Metas de Propostas' : 'Metas de Vendas'}
+          </ChartTitle>
+          <ChartSubtitle>
+            {user?.role === 'vendedor' 
+              ? 'Progresso das suas metas de propostas' 
+              : 'Progresso das metas mensais'
+            }
+          </ChartSubtitle>
           <GoalsList>
-            {goals.map((goal, index) => (
+            {(user?.role === 'vendedor' ? vendedorGoals : adminGoals).map((goal, index) => (
               <GoalItem key={index}>
                 <GoalName>{goal.name}</GoalName>
                 <GoalProgress>
@@ -301,18 +372,37 @@ export const Dashboard: React.FC = () => {
       </ChartsGrid>
 
       <PerformanceMetrics>
-        <MetricItem>
-          <MetricItemLabel>Propostas Perdidas</MetricItemLabel>
-          <MetricItemValue $negative>0</MetricItemValue>
-        </MetricItem>
-        <MetricItem>
-          <MetricItemLabel>Vendas Abertas</MetricItemLabel>
-          <MetricItemValue $negative>0</MetricItemValue>
-        </MetricItem>
-        <MetricItem>
-          <MetricItemLabel>Ticket Médio</MetricItemLabel>
-          <MetricItemValue $negative>R$ 0</MetricItemValue>
-        </MetricItem>
+        {user?.role === 'vendedor' ? (
+          <>
+            <MetricItem>
+              <MetricItemLabel>Propostas Pendentes</MetricItemLabel>
+              <MetricItemValue $negative>0</MetricItemValue>
+            </MetricItem>
+            <MetricItem>
+              <MetricItemLabel>Propostas Rejeitadas</MetricItemLabel>
+              <MetricItemValue $negative>0</MetricItemValue>
+            </MetricItem>
+            <MetricItem>
+              <MetricItemLabel>Valor Médio Proposta</MetricItemLabel>
+              <MetricItemValue $negative>R$ 0</MetricItemValue>
+            </MetricItem>
+          </>
+        ) : (
+          <>
+            <MetricItem>
+              <MetricItemLabel>Propostas Perdidas</MetricItemLabel>
+              <MetricItemValue $negative>0</MetricItemValue>
+            </MetricItem>
+            <MetricItem>
+              <MetricItemLabel>Vendas Abertas</MetricItemLabel>
+              <MetricItemValue $negative>0</MetricItemValue>
+            </MetricItem>
+            <MetricItem>
+              <MetricItemLabel>Ticket Médio</MetricItemLabel>
+              <MetricItemValue $negative>R$ 0</MetricItemValue>
+            </MetricItem>
+          </>
+        )}
       </PerformanceMetrics>
     </Container>
   );
