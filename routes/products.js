@@ -60,6 +60,24 @@ router.get('/', async (req, res) => {
       sortOrder = 'desc'
     } = req.query;
 
+    // Usar dados em memória se o banco não estiver conectado
+    if (req.useMemoryStore) {
+      const products = memoryStore.getProducts({ category, search });
+      const skip = (page - 1) * limit;
+      const paginatedProducts = products.slice(skip, skip + parseInt(limit));
+      
+      return res.json({
+        success: true,
+        data: paginatedProducts,
+        pagination: {
+          current: parseInt(page),
+          pages: Math.ceil(products.length / limit),
+          total: products.length,
+          limit: parseInt(limit)
+        }
+      });
+    }
+
     const query = { isActive: true };
 
     // Filtros
