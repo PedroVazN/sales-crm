@@ -26,11 +26,13 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 10000,
+      connectTimeoutMS: 30000,
       retryWrites: true,
-      w: 'majority'
+      w: 'majority',
+      bufferCommands: false,
+      bufferMaxEntries: 0
     });
     
     console.log(`✅ MongoDB Atlas conectado: ${conn.connection.host}`);
@@ -40,8 +42,17 @@ const connectDB = async () => {
   } catch (error) {
     console.error('❌ Erro ao conectar com MongoDB:', error.message);
     console.error('Stack trace:', error.stack);
+    
+    // Em produção, tentar reconectar após um delay
     if (process.env.NODE_ENV === 'production') {
-      console.log('⚠️  Continuando sem conexão com MongoDB em produção');
+      console.log('⚠️  Tentando reconectar em 5 segundos...');
+      setTimeout(async () => {
+        try {
+          await connectDB();
+        } catch (retryError) {
+          console.error('❌ Falha na reconexão:', retryError.message);
+        }
+      }, 5000);
       return false;
     } else {
       throw error;
@@ -72,12 +83,14 @@ const setupModels = () => {
   }
 };
 
-// Middleware para verificar conexão (com fallback)
+// Middleware para verificar conexão
 const checkConnection = (req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
-    console.log('⚠️ Banco de dados não conectado, usando dados mockados');
-    // Em vez de retornar erro, continuar com dados mockados
-    req.useMockData = true;
+    return res.status(503).json({
+      success: false,
+      error: 'Banco de dados não conectado',
+      message: 'Serviço temporariamente indisponível'
+    });
   }
   next();
 };
