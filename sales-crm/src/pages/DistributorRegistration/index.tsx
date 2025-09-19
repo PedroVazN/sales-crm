@@ -178,7 +178,7 @@ export const DistributorRegistration: React.FC = () => {
       newErrors['contato.telefone'] = 'Telefone do contato é obrigatório';
     }
 
-    if (!formData.pedidoMinimo.valor || formData.pedidoMinimo.valor <= 0) {
+    if (formData.pedidoMinimo.valor === undefined || formData.pedidoMinimo.valor === null || formData.pedidoMinimo.valor < 0) {
       newErrors['pedidoMinimo.valor'] = 'Valor do pedido mínimo é obrigatório';
     }
 
