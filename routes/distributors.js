@@ -66,7 +66,10 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const distributor = await Distributor.findOne({
       _id: req.params.id,
-      'createdBy._id': req.user.id
+      $or: [
+        { 'createdBy._id': req.user.id },
+        { createdBy: req.user.id }
+      ]
     }).populate('createdBy', 'name email');
 
     if (!distributor) {
@@ -114,11 +117,7 @@ router.post('/', auth, async (req, res) => {
       pedidoMinimo,
       endereco,
       observacoes,
-      createdBy: {
-        _id: req.user.id,
-        name: req.user.name,
-        email: req.user.email
-      }
+      createdBy: req.user.id // Salvar como string para compatibilidade
     });
 
     await distributor.save();
