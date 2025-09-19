@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 const { auth, authorize } = require('../middleware/auth');
+const memoryStore = require('../data/memory-store');
 
 const router = express.Router();
 
