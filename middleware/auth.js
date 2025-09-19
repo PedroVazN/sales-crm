@@ -3,24 +3,17 @@ const User = require('../models/User');
 
 const auth = async (req, res, next) => {
   try {
-    // Modo desenvolvimento - criar usuário temporário
-    if (process.env.NODE_ENV === 'development') {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    // Se não há token, usar usuário temporário (para desenvolvimento e produção sem auth)
+    if (!token) {
       req.user = {
         id: '68c1afbcf906c14a8e7e8ff7', // ObjectId válido do MongoDB
-        name: 'Usuário Desenvolvimento',
-        email: 'dev@example.com',
+        name: 'Usuário Temporário',
+        email: 'temp@example.com',
         role: 'admin'
       };
       return next();
-    }
-
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token de acesso não fornecido'
-      });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
