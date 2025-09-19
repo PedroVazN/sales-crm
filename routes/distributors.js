@@ -6,62 +6,6 @@ const { auth } = require('../middleware/auth');
 // GET /api/distributors - Listar todos os distribuidores
 router.get('/', auth, async (req, res) => {
   try {
-    // Se não há conexão com banco, usar dados mockados
-    if (req.useMockData) {
-      const mockDistributors = [
-        {
-          _id: 'mock1',
-          apelido: 'Distribuidor Mock 1',
-          razaoSocial: 'Distribuidor Mock LTDA',
-          idDistribuidor: 'MOCK001',
-          contato: {
-            nome: 'João Silva',
-            telefone: '(11) 99999-9999',
-            cargo: 'Gerente'
-          },
-          origem: 'São Paulo/SP',
-          isActive: true,
-          createdBy: {
-            _id: req.user.id,
-            name: req.user.name,
-            email: req.user.email
-          },
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          _id: 'mock2',
-          apelido: 'Distribuidor Mock 2',
-          razaoSocial: 'Distribuidor Mock 2 LTDA',
-          idDistribuidor: 'MOCK002',
-          contato: {
-            nome: 'Maria Santos',
-            telefone: '(11) 88888-8888',
-            cargo: 'Diretora'
-          },
-          origem: 'Rio de Janeiro/RJ',
-          isActive: true,
-          createdBy: {
-            _id: req.user.id,
-            name: req.user.name,
-            email: req.user.email
-          },
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ];
-
-      return res.json({
-        data: mockDistributors,
-        pagination: {
-          current: 1,
-          pages: 1,
-          total: 2,
-          limit: 10
-        }
-      });
-    }
-
     const { page = 1, limit = 10, search, origem, isActive } = req.query;
     const skip = (page - 1) * limit;
 
