@@ -61,13 +61,9 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Middleware para adicionar flag de dados mockados (sem bloquear rotas)
+// Middleware para adicionar flag de dados mockados (sempre true por enquanto)
 app.use('/api', (req, res, next) => {
-  if (mongoose.connection.readyState !== 1) {
-    req.useMockData = true;
-  } else {
-    req.useMockData = false;
-  }
+  req.useMockData = true; // Sempre usar dados mockados por enquanto
   next();
 });
 
