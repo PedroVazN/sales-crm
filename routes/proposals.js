@@ -10,7 +10,7 @@ router.get('/', auth, async (req, res) => {
     const { page = 1, limit = 10, status, search } = req.query;
     const skip = (page - 1) * limit;
 
-    let query = { createdBy: req.user.id };
+    let query = { 'createdBy._id': req.user.id };
     
     if (status) {
       query.status = status;
@@ -53,7 +53,7 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const proposal = await Proposal.findOne({
       _id: req.params.id,
-      createdBy: req.user.id
+      'createdBy._id': req.user.id
     }).populate('createdBy', 'name email');
 
     if (!proposal) {
