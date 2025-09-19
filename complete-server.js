@@ -1230,6 +1230,26 @@ app.use('/api/notifications', notificationsRouter);
 const usersRouter = require('./routes/users');
 app.use('/api/users', usersRouter);
 
+// Importar e usar as rotas de produtos
+const productsRouter = require('./routes/products');
+app.use('/api/products', productsRouter);
+
+// Importar e usar as rotas de distribuidores
+const distributorsRouter = require('./routes/distributors');
+app.use('/api/distributors', distributorsRouter);
+
+// Importar e usar as rotas de vendas
+const salesRouter = require('./routes/sales');
+app.use('/api/sales', salesRouter);
+
+// Importar e usar as rotas de propostas
+const proposalsRouter = require('./routes/proposals');
+app.use('/api/proposals', proposalsRouter);
+
+// Importar e usar as rotas de lista de preços
+const priceListRouter = require('./routes/priceList');
+app.use('/api/price-list', priceListRouter);
+
 // Rota de health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'API funcionando' });
