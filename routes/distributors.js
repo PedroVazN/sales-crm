@@ -9,15 +9,24 @@ router.get('/', auth, async (req, res) => {
     const { page = 1, limit = 10, search, origem, isActive } = req.query;
     const skip = (page - 1) * limit;
 
-    let query = { 'createdBy._id': req.user.id };
+    let query = { $or: [
+      { 'createdBy._id': req.user.id },
+      { createdBy: req.user.id }
+    ]};
     
     if (search) {
-      query.$or = [
-        { apelido: { $regex: search, $options: 'i' } },
-        { razaoSocial: { $regex: search, $options: 'i' } },
-        { idDistribuidor: { $regex: search, $options: 'i' } },
-        { 'contato.nome': { $regex: search, $options: 'i' } },
-        { 'contato.telefone': { $regex: search, $options: 'i' } }
+      query.$and = [
+        { $or: [
+          { 'createdBy._id': req.user.id },
+          { createdBy: req.user.id }
+        ]},
+        { $or: [
+          { apelido: { $regex: search, $options: 'i' } },
+          { razaoSocial: { $regex: search, $options: 'i' } },
+          { idDistribuidor: { $regex: search, $options: 'i' } },
+          { 'contato.nome': { $regex: search, $options: 'i' } },
+          { 'contato.telefone': { $regex: search, $options: 'i' } }
+        ]}
       ];
     }
     
