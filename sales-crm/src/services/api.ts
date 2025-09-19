@@ -449,7 +449,8 @@ class ApiService {
 
   constructor() {
     this.baseURL = API_BASE_URL;
-    this.token = localStorage.getItem('authToken');
+    // Não usar token de autenticação por enquanto - o backend usa usuário temporário
+    this.token = null;
   }
 
   private async request<T>(
