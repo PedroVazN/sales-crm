@@ -166,57 +166,6 @@ app.get('/api/reconnect-db', async (req, res) => {
   }
 });
 
-// Rota para forçar conexão com banco
-app.get('/api/force-connect', async (req, res) => {
-  try {
-    console.log('🔧 Forçando conexão com MongoDB...');
-    
-    // Verificar se já está conectado
-    if (mongoose.connection.readyState === 1) {
-      return res.json({
-        success: true,
-        message: 'Já conectado ao banco de dados',
-        database: {
-          status: 'Conectado',
-          readyState: mongoose.connection.readyState,
-          name: mongoose.connection.name,
-          host: mongoose.connection.host
-        }
-      });
-    }
-    
-    // Tentar conectar
-    const { connectDB } = require('./config/database');
-    const connected = await connectDB();
-    
-    if (connected) {
-      res.json({
-        success: true,
-        message: 'Conexão estabelecida com sucesso!',
-        database: {
-          status: 'Conectado',
-          readyState: mongoose.connection.readyState,
-          name: mongoose.connection.name,
-          host: mongoose.connection.host
-        }
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: 'Falha na conexão com o banco de dados',
-        error: 'Verifique a configuração MONGODB_URI na Vercel'
-      });
-    }
-  } catch (error) {
-    console.error('❌ Erro ao forçar conexão:', error.message);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      message: 'Erro ao conectar com o banco de dados'
-    });
-  }
-});
-
 // Rota de teste para verificar se o servidor está funcionando
 app.get('/api/test', (req, res) => {
   res.json({ 
