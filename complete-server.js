@@ -61,8 +61,15 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Aplicar middleware de verificação de conexão em todas as rotas da API
-app.use('/api', checkConnection);
+// Middleware para adicionar flag de dados mockados (sem bloquear rotas)
+app.use('/api', (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    req.useMockData = true;
+  } else {
+    req.useMockData = false;
+  }
+  next();
+});
 
 // Importar e usar as rotas
 const clientsRouter = require('./routes/clients');
