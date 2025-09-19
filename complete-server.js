@@ -94,7 +94,40 @@ app.use('/api/price-list', checkConnection, priceListRouter);
 
 // Rota de health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', message: 'API funcionando' });
+  res.json({ 
+    status: 'OK', 
+    message: 'API funcionando',
+    database: mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado',
+    readyState: mongoose.connection.readyState
+  });
+});
+
+// Rota de teste de banco de dados
+app.get('/api/test-db', (req, res) => {
+  try {
+    const dbStatus = mongoose.connection.readyState;
+    const dbName = mongoose.connection.name;
+    const dbHost = mongoose.connection.host;
+    
+    res.json({
+      success: true,
+      database: {
+        status: dbStatus === 1 ? 'Conectado' : 'Desconectado',
+        readyState: dbStatus,
+        name: dbName,
+        host: dbHost
+      },
+      environment: {
+        nodeEnv: process.env.NODE_ENV,
+        hasMongoUri: !!process.env.MONGODB_URI
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 // Rota de teste para verificar se o servidor está funcionando
