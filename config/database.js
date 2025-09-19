@@ -5,6 +5,10 @@ const connectDB = async () => {
   try {
     const atlasUri = process.env.MONGODB_URI;
     
+    console.log('🔍 Verificando configuração do MongoDB...');
+    console.log('MONGODB_URI configurada:', !!atlasUri);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    
     if (!atlasUri) {
       console.error('❌ MONGODB_URI não encontrada nas variáveis de ambiente');
       console.log('💡 Configure MONGODB_URI na Vercel ou no arquivo .env');
@@ -15,19 +19,27 @@ const connectDB = async () => {
       throw new Error('MONGODB_URI não configurada');
     }
     
+    console.log('🔗 Tentando conectar ao MongoDB...');
+    console.log('URI (primeiros 20 chars):', atlasUri.substring(0, 20) + '...');
+    
     const conn = await mongoose.connect(atlasUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+      retryWrites: true,
+      w: 'majority'
     });
     
     console.log(`✅ MongoDB Atlas conectado: ${conn.connection.host}`);
     console.log(`📊 Database: ${conn.connection.name}`);
+    console.log(`🔌 Estado da conexão: ${conn.connection.readyState}`);
     return true;
   } catch (error) {
     console.error('❌ Erro ao conectar com MongoDB:', error.message);
+    console.error('Stack trace:', error.stack);
     if (process.env.NODE_ENV === 'production') {
       console.log('⚠️  Continuando sem conexão com MongoDB em produção');
       return false;
