@@ -31,7 +31,6 @@ export const DistributorRegistration: React.FC = () => {
     idDistribuidor: '',
     contato: {
       nome: '',
-      email: '',
       telefone: '',
       cargo: ''
     },
@@ -174,9 +173,6 @@ export const DistributorRegistration: React.FC = () => {
       newErrors['contato.nome'] = 'Nome do contato é obrigatório';
     }
 
-    if (!formData.contato.email) {
-      newErrors['contato.email'] = 'Email do contato é obrigatório';
-    }
 
     if (!formData.contato.telefone) {
       newErrors['contato.telefone'] = 'Telefone do contato é obrigatório';
@@ -326,18 +322,6 @@ export const DistributorRegistration: React.FC = () => {
                 {errors['contato.nome'] && <ErrorMessage>{errors['contato.nome']}</ErrorMessage>}
               </FormGroup>
 
-              <FormGroup>
-                <Label>Email *</Label>
-                <Input
-                  type="email"
-                  name="contato.email"
-                  value={formData.contato.email}
-                  onChange={handleInputChange}
-                  placeholder="email@exemplo.com"
-                  $hasError={!!errors['contato.email']}
-                />
-                {errors['contato.email'] && <ErrorMessage>{errors['contato.email']}</ErrorMessage>}
-              </FormGroup>
             </Grid>
 
             <Grid columns={2}>

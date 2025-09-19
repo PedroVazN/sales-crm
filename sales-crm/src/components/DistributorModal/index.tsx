@@ -44,7 +44,6 @@ export const DistributorModal: React.FC<DistributorModalProps> = ({
     idDistribuidor: distributor?.idDistribuidor || '',
     contato: {
       nome: distributor?.contato?.nome || '',
-      email: distributor?.contato?.email || '',
       telefone: distributor?.contato?.telefone || '',
       cargo: distributor?.contato?.cargo || ''
     },
@@ -219,16 +218,6 @@ export const DistributorModal: React.FC<DistributorModalProps> = ({
                     type="text"
                     value={formData.contato.nome}
                     onChange={(e) => handleInputChange('contato.nome', e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="contato.email">E-mail *</Label>
-                  <Input
-                    id="contato.email"
-                    type="email"
-                    value={formData.contato.email}
-                    onChange={(e) => handleInputChange('contato.email', e.target.value)}
                     required
                   />
                 </div>

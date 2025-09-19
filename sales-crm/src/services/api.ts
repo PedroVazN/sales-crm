@@ -122,7 +122,6 @@ export interface Distributor {
   idDistribuidor?: string;
   contato?: {
     nome: string;
-    email: string;
     telefone: string;
     cargo?: string;
   };
@@ -468,9 +467,6 @@ class ApiService {
       ...options,
     };
 
-    console.log('Fazendo requisição para:', url);
-    console.log('Headers:', config.headers);
-    console.log('Token:', this.token);
 
     try {
       const response = await fetch(url, config);
@@ -483,7 +479,6 @@ class ApiService {
 
       const data = await response.json();
 
-      console.log('Resposta da API:', response.status, data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Erro na requisição');

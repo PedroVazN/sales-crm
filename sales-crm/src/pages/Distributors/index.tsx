@@ -212,11 +212,13 @@ export const Distributors: React.FC = () => {
                     <div>
                       <div>{distributor.contato?.nome || distributor.contactPerson?.name || 'N/A'}</div>
                       <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                        {distributor.contato?.email || distributor.email || 'N/A'}
-                      </div>
-                      <div style={{ fontSize: '0.9rem', color: '#666' }}>
                         {distributor.contato?.telefone ? formatPhone(distributor.contato.telefone) : distributor.phone || 'N/A'}
                       </div>
+                      {distributor.contato?.cargo && (
+                        <div style={{ fontSize: '0.8rem', color: '#999' }}>
+                          {distributor.contato.cargo}
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>{distributor.origem || distributor.address?.city || 'N/A'}</TableCell>
@@ -249,3 +251,4 @@ export const Distributors: React.FC = () => {
     </Container>
   );
 };
+

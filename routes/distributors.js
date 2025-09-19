@@ -100,7 +100,7 @@ router.post('/', auth, async (req, res) => {
     } = req.body;
 
     // Validações básicas
-    if (!apelido || !razaoSocial || !idDistribuidor || !contato?.nome || !contato?.telefone || !origem || !pedidoMinimo?.valor) {
+    if (!apelido || !razaoSocial || !idDistribuidor || !contato?.nome || !contato?.telefone || !origem || pedidoMinimo?.valor === undefined || pedidoMinimo?.valor === null || pedidoMinimo.valor < 0) {
       return res.status(400).json({ 
         error: 'Apelido, razão social, ID do distribuidor, contato, origem e pedido mínimo são obrigatórios' 
       });
@@ -117,7 +117,7 @@ router.post('/', auth, async (req, res) => {
       pedidoMinimo,
       endereco,
       observacoes,
-      createdBy: req.user.id // Salvar como string para compatibilidade
+      createdBy: req.user.id
     });
 
     await distributor.save();
