@@ -130,6 +130,42 @@ app.get('/api/test-db', (req, res) => {
   }
 });
 
+// Rota para tentar reconectar ao banco
+app.get('/api/reconnect-db', async (req, res) => {
+  try {
+    console.log('🔄 Tentando reconectar ao MongoDB...');
+    
+    // Fechar conexão existente se houver
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+      console.log('🔌 Conexão anterior fechada');
+    }
+    
+    // Tentar conectar novamente
+    const { connectDB } = require('./config/database');
+    const connected = await connectDB();
+    
+    res.json({
+      success: true,
+      connected,
+      message: connected ? 'Conexão estabelecida com sucesso' : 'Falha na conexão',
+      database: {
+        status: mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado',
+        readyState: mongoose.connection.readyState,
+        name: mongoose.connection.name,
+        host: mongoose.connection.host
+      }
+    });
+  } catch (error) {
+    console.error('❌ Erro ao reconectar:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      connected: false
+    });
+  }
+});
+
 // Rota de teste para verificar se o servidor está funcionando
 app.get('/api/test', (req, res) => {
   res.json({ 
