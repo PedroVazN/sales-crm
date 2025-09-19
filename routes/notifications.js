@@ -9,6 +9,31 @@ router.use(auth);
 // GET /api/notifications - Listar notificações do usuário
 router.get('/', async (req, res) => {
   try {
+    // Se não há conexão com banco, usar dados mockados
+    if (req.useMockData) {
+      const mockNotifications = [
+        {
+          _id: 'mock1',
+          title: 'Bem-vindo ao sistema',
+          message: 'Sistema funcionando com dados mockados',
+          type: 'info',
+          isRead: false,
+          createdAt: new Date(),
+          recipient: req.user.id
+        }
+      ];
+
+      return res.json({
+        success: true,
+        data: mockNotifications,
+        pagination: {
+          current: 1,
+          pages: 1,
+          total: 1
+        }
+      });
+    }
+
     const { page = 1, limit = 20, unreadOnly = false, type } = req.query;
     const skip = (page - 1) * limit;
 
@@ -54,6 +79,14 @@ router.get('/', async (req, res) => {
 // GET /api/notifications/unread-count - Contar notificações não lidas
 router.get('/unread-count', async (req, res) => {
   try {
+    // Se não há conexão com banco, usar dados mockados
+    if (req.useMockData) {
+      return res.json({
+        success: true,
+        data: { count: 0 }
+      });
+    }
+
     const count = await Notification.countDocuments({
       recipient: req.user.id,
       isRead: false,

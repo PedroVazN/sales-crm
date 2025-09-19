@@ -61,36 +61,39 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Importar e usar as rotas com verificação de conexão
+// Aplicar middleware de verificação de conexão em todas as rotas da API
+app.use('/api', checkConnection);
+
+// Importar e usar as rotas
 const clientsRouter = require('./routes/clients');
-app.use('/api/clients', checkConnection, clientsRouter);
+app.use('/api/clients', clientsRouter);
 
 const eventsRouter = require('./routes/events');
-app.use('/api/events', checkConnection, eventsRouter);
+app.use('/api/events', eventsRouter);
 
 const goalsRouter = require('./routes/goals');
-app.use('/api/goals', checkConnection, goalsRouter);
+app.use('/api/goals', goalsRouter);
 
 const notificationsRouter = require('./routes/notifications');
-app.use('/api/notifications', checkConnection, notificationsRouter);
+app.use('/api/notifications', notificationsRouter);
 
 const usersRouter = require('./routes/users');
-app.use('/api/users', checkConnection, usersRouter);
+app.use('/api/users', usersRouter);
 
 const productsRouter = require('./routes/products');
-app.use('/api/products', checkConnection, productsRouter);
+app.use('/api/products', productsRouter);
 
 const distributorsRouter = require('./routes/distributors');
-app.use('/api/distributors', checkConnection, distributorsRouter);
+app.use('/api/distributors', distributorsRouter);
 
 const salesRouter = require('./routes/sales');
-app.use('/api/sales', checkConnection, salesRouter);
+app.use('/api/sales', salesRouter);
 
 const proposalsRouter = require('./routes/proposals');
-app.use('/api/proposals', checkConnection, proposalsRouter);
+app.use('/api/proposals', proposalsRouter);
 
 const priceListRouter = require('./routes/priceList');
-app.use('/api/price-list', checkConnection, priceListRouter);
+app.use('/api/price-list', priceListRouter);
 
 // Rota de health check
 app.get('/health', (req, res) => {
