@@ -3,7 +3,6 @@ const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const { auth } = require('../middleware/auth');
-const memoryStore = require('../data/memory-store');
 
 // Aplicar middleware de autenticação em todas as rotas
 router.use(auth);
@@ -20,25 +19,6 @@ router.get('/', async (req, res) => {
     }
 
     const { page = 1, limit = 20, search = '', role = '' } = req.query;
-    
-    // Usar dados em memória se o banco não estiver conectado
-    if (req.useMemoryStore) {
-      const users = memoryStore.getUsers({ search, role });
-      const skip = (page - 1) * limit;
-      const paginatedUsers = users.slice(skip, skip + parseInt(limit));
-      
-      return res.json({
-        success: true,
-        data: paginatedUsers,
-        pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(users.length / limit),
-          total: users.length,
-          limit: parseInt(limit)
-        }
-      });
-    }
-
     const skip = (page - 1) * limit;
 
     const filter = {};

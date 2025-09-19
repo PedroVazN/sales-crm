@@ -3,7 +3,6 @@ const { body, validationResult } = require('express-validator');
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 const { auth, authorize } = require('../middleware/auth');
-const memoryStore = require('../data/memory-store');
 
 const router = express.Router();
 
@@ -109,24 +108,6 @@ router.get('/', auth, async (req, res) => {
       sortBy = 'createdAt',
       sortOrder = 'desc'
     } = req.query;
-
-    // Usar dados em memória se o banco não estiver conectado
-    if (req.useMemoryStore) {
-      const sales = memoryStore.getSales({ status, paymentStatus });
-      const skip = (page - 1) * limit;
-      const paginatedSales = sales.slice(skip, skip + parseInt(limit));
-      
-      return res.json({
-        success: true,
-        data: paginatedSales,
-        pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(sales.length / limit),
-          total: sales.length,
-          limit: parseInt(limit)
-        }
-      });
-    }
 
     const query = {};
 

@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Notification = require('../models/Notification');
 const { auth } = require('../middleware/auth');
-const memoryStore = require('../data/memory-store');
 
 // Aplicar middleware de autenticação em todas as rotas
 router.use(auth);
@@ -55,15 +54,6 @@ router.get('/', async (req, res) => {
 // GET /api/notifications/unread-count - Contar notificações não lidas
 router.get('/unread-count', async (req, res) => {
   try {
-    // Usar dados em memória se o banco não estiver conectado
-    if (req.useMemoryStore) {
-      const count = memoryStore.getUnreadNotificationCount(req.user.id);
-      return res.json({
-        success: true,
-        data: { count }
-      });
-    }
-
     const count = await Notification.countDocuments({
       recipient: req.user.id,
       isRead: false,

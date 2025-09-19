@@ -166,45 +166,6 @@ app.get('/api/reconnect-db', async (req, res) => {
   }
 });
 
-// Rota para testar operações CRUD reais
-app.get('/api/test-crud', async (req, res) => {
-  try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({
-        success: false,
-        error: 'Banco de dados não conectado',
-        readyState: mongoose.connection.readyState
-      });
-    }
-
-    // Testar operação de leitura
-    const Distributor = require('./models/DistributorNew');
-    const count = await Distributor.countDocuments();
-    
-    res.json({
-      success: true,
-      message: 'CRUD funcionando com dados reais',
-      database: {
-        status: 'Conectado',
-        readyState: mongoose.connection.readyState,
-        name: mongoose.connection.name,
-        host: mongoose.connection.host
-      },
-      test: {
-        distributorsCount: count,
-        operation: 'READ_SUCCESS'
-      }
-    });
-  } catch (error) {
-    console.error('❌ Erro no teste CRUD:', error.message);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      readyState: mongoose.connection.readyState
-    });
-  }
-});
-
 // Rota de teste para verificar se o servidor está funcionando
 app.get('/api/test', (req, res) => {
   res.json({ 

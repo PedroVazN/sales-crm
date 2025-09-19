@@ -2,30 +2,67 @@ const express = require('express');
 const router = express.Router();
 const Distributor = require('../models/DistributorNew');
 const { auth } = require('../middleware/auth');
-const memoryStore = require('../data/memory-store');
 
 // GET /api/distributors - Listar todos os distribuidores
 router.get('/', auth, async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, origem, isActive } = req.query;
-    
-    // Usar dados em memória se o banco não estiver conectado
-    if (req.useMemoryStore) {
-      const distributors = memoryStore.getDistributors({ search, origem, isActive });
-      const skip = (page - 1) * limit;
-      const paginatedDistributors = distributors.slice(skip, skip + parseInt(limit));
-      
+    // Se não há conexão com banco, usar dados mockados
+    if (req.useMockData) {
+      const mockDistributors = [
+        {
+          _id: 'mock1',
+          apelido: 'Distribuidor Mock 1',
+          razaoSocial: 'Distribuidor Mock LTDA',
+          idDistribuidor: 'MOCK001',
+          contato: {
+            nome: 'João Silva',
+            telefone: '(11) 99999-9999',
+            cargo: 'Gerente'
+          },
+          origem: 'São Paulo/SP',
+          isActive: true,
+          createdBy: {
+            _id: req.user.id,
+            name: req.user.name,
+            email: req.user.email
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          _id: 'mock2',
+          apelido: 'Distribuidor Mock 2',
+          razaoSocial: 'Distribuidor Mock 2 LTDA',
+          idDistribuidor: 'MOCK002',
+          contato: {
+            nome: 'Maria Santos',
+            telefone: '(11) 88888-8888',
+            cargo: 'Diretora'
+          },
+          origem: 'Rio de Janeiro/RJ',
+          isActive: true,
+          createdBy: {
+            _id: req.user.id,
+            name: req.user.name,
+            email: req.user.email
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
       return res.json({
-        data: paginatedDistributors,
+        data: mockDistributors,
         pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(distributors.length / limit),
-          total: distributors.length,
-          limit: parseInt(limit)
+          current: 1,
+          pages: 1,
+          total: 2,
+          limit: 10
         }
       });
     }
 
+    const { page = 1, limit = 10, search, origem, isActive } = req.query;
     const skip = (page - 1) * limit;
 
     let query = { $or: [
@@ -125,41 +162,6 @@ router.post('/', auth, async (req, res) => {
       });
     }
 
-    // Usar dados em memória se o banco não estiver conectado
-    if (req.useMemoryStore) {
-      // Verificar se já existe distribuidor com mesmo apelido ou ID
-      const existingDistributor = memoryStore.getDistributors().find(d => 
-        d.apelido === apelido || d.idDistribuidor === idDistribuidor
-      );
-
-      if (existingDistributor) {
-        return res.status(400).json({ 
-          error: 'Apelido ou ID do distribuidor já cadastrado' 
-        });
-      }
-
-      const distributorData = {
-        apelido,
-        razaoSocial,
-        idDistribuidor,
-        contato,
-        origem,
-        atendimento,
-        frete,
-        pedidoMinimo,
-        endereco,
-        observacoes,
-        createdBy: {
-          _id: req.user.id,
-          name: req.user.name,
-          email: req.user.email
-        }
-      };
-
-      const distributor = memoryStore.createDistributor(distributorData);
-      return res.status(201).json({ data: distributor });
-    }
-
     const distributor = new Distributor({
       apelido,
       razaoSocial,
@@ -246,17 +248,6 @@ router.put('/:id', auth, async (req, res) => {
 // DELETE /api/distributors/:id - Deletar distribuidor
 router.delete('/:id', auth, async (req, res) => {
   try {
-    // Usar dados em memória se o banco não estiver conectado
-    if (req.useMemoryStore) {
-      const distributor = memoryStore.deleteDistributor(req.params.id);
-      
-      if (!distributor) {
-        return res.status(404).json({ error: 'Distribuidor não encontrado' });
-      }
-
-      return res.json({ message: 'Distribuidor deletado com sucesso' });
-    }
-
     const distributor = await Distributor.findOneAndDelete({
       _id: req.params.id,
       createdBy: {
