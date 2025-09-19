@@ -28,8 +28,13 @@ const connectDB = async () => {
     const atlasUri = process.env.MONGODB_URI;
     
     if (!atlasUri) {
-      console.error('❌ MONGODB_URI não encontrada no arquivo .env');
-      console.log('💡 Crie um arquivo .env com: MONGODB_URI=sua_string_de_conexao');
+      console.error('❌ MONGODB_URI não encontrada nas variáveis de ambiente');
+      console.log('💡 Configure MONGODB_URI na Vercel ou no arquivo .env');
+      // Em produção, não sair do processo, apenas logar o erro
+      if (process.env.NODE_ENV === 'production') {
+        console.log('⚠️  Continuando sem conexão com MongoDB em produção');
+        return;
+      }
       process.exit(1);
     }
     
@@ -1214,6 +1219,15 @@ app.use('/api/users', usersRouter);
 // Rota de health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'API funcionando' });
+});
+
+// Rota de teste para verificar se o servidor está funcionando
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'Backend funcionando!', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 const PORT = process.env.PORT || 3000;
