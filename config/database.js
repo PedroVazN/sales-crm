@@ -72,14 +72,12 @@ const setupModels = () => {
   }
 };
 
-// Middleware para verificar conexão
+// Middleware para verificar conexão (com fallback)
 const checkConnection = (req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
-    return res.status(503).json({
-      success: false,
-      error: 'Banco de dados não conectado',
-      message: 'Serviço temporariamente indisponível'
-    });
+    console.log('⚠️ Banco de dados não conectado, usando dados mockados');
+    // Em vez de retornar erro, continuar com dados mockados
+    req.useMockData = true;
   }
   next();
 };
