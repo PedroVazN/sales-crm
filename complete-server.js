@@ -35,36 +35,21 @@ app.use(express.urlencoded({ extended: true }));
 // Carregar variáveis de ambiente
 require('dotenv').config();
 
-// Conexão com MongoDB
-const connectDB = async () => {
+// Importar configuração do banco de dados
+const { connectDB, setupModels, checkConnection } = require('./config/database');
+
+// Conectar ao MongoDB e configurar modelos
+const initializeDatabase = async () => {
   try {
-    const atlasUri = process.env.MONGODB_URI;
-    
-    if (!atlasUri) {
-      console.error('❌ MONGODB_URI não encontrada nas variáveis de ambiente');
-      console.log('💡 Configure MONGODB_URI na Vercel ou no arquivo .env');
-      if (process.env.NODE_ENV === 'production') {
-        console.log('⚠️  Continuando sem conexão com MongoDB em produção');
-        return;
-      }
-      process.exit(1);
-    }
-    
-    const conn = await mongoose.connect(atlasUri);
-    console.log(`✅ MongoDB Atlas conectado: ${conn.connection.host}`);
-    console.log(`📊 Database: ${conn.connection.name}`);
+    await connectDB();
+    setupModels();
   } catch (error) {
-    console.error('❌ Erro ao conectar com MongoDB:', error.message);
-    if (process.env.NODE_ENV === 'production') {
-      console.log('⚠️  Continuando sem conexão com MongoDB em produção');
-    } else {
-      process.exit(1);
-    }
+    console.error('❌ Erro ao inicializar banco de dados:', error.message);
   }
 };
 
-// Conectar ao MongoDB
-connectDB();
+// Inicializar banco de dados
+initializeDatabase();
 
 // Rota da API
 app.get('/api', (req, res) => {
@@ -76,36 +61,36 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Importar e usar as rotas
+// Importar e usar as rotas com verificação de conexão
 const clientsRouter = require('./routes/clients');
-app.use('/api/clients', clientsRouter);
+app.use('/api/clients', checkConnection, clientsRouter);
 
 const eventsRouter = require('./routes/events');
-app.use('/api/events', eventsRouter);
+app.use('/api/events', checkConnection, eventsRouter);
 
 const goalsRouter = require('./routes/goals');
-app.use('/api/goals', goalsRouter);
+app.use('/api/goals', checkConnection, goalsRouter);
 
 const notificationsRouter = require('./routes/notifications');
-app.use('/api/notifications', notificationsRouter);
+app.use('/api/notifications', checkConnection, notificationsRouter);
 
 const usersRouter = require('./routes/users');
-app.use('/api/users', usersRouter);
+app.use('/api/users', checkConnection, usersRouter);
 
 const productsRouter = require('./routes/products');
-app.use('/api/products', productsRouter);
+app.use('/api/products', checkConnection, productsRouter);
 
 const distributorsRouter = require('./routes/distributors');
-app.use('/api/distributors', distributorsRouter);
+app.use('/api/distributors', checkConnection, distributorsRouter);
 
 const salesRouter = require('./routes/sales');
-app.use('/api/sales', salesRouter);
+app.use('/api/sales', checkConnection, salesRouter);
 
 const proposalsRouter = require('./routes/proposals');
-app.use('/api/proposals', proposalsRouter);
+app.use('/api/proposals', checkConnection, proposalsRouter);
 
 const priceListRouter = require('./routes/priceList');
-app.use('/api/price-list', priceListRouter);
+app.use('/api/price-list', checkConnection, priceListRouter);
 
 // Rota de health check
 app.get('/health', (req, res) => {
