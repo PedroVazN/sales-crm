@@ -2,11 +2,30 @@ const express = require('express');
 const router = express.Router();
 const Distributor = require('../models/DistributorNew');
 const { auth } = require('../middleware/auth');
+const memoryStore = require('../data/memory-store');
 
 // GET /api/distributors - Listar todos os distribuidores
 router.get('/', auth, async (req, res) => {
   try {
     const { page = 1, limit = 10, search, origem, isActive } = req.query;
+    
+    // Usar dados em memória se o banco não estiver conectado
+    if (req.useMemoryStore) {
+      const distributors = memoryStore.getDistributors({ search, origem, isActive });
+      const skip = (page - 1) * limit;
+      const paginatedDistributors = distributors.slice(skip, skip + parseInt(limit));
+      
+      return res.json({
+        data: paginatedDistributors,
+        pagination: {
+          current: parseInt(page),
+          pages: Math.ceil(distributors.length / limit),
+          total: distributors.length,
+          limit: parseInt(limit)
+        }
+      });
+    }
+
     const skip = (page - 1) * limit;
 
     let query = { $or: [
@@ -106,6 +125,41 @@ router.post('/', auth, async (req, res) => {
       });
     }
 
+    // Usar dados em memória se o banco não estiver conectado
+    if (req.useMemoryStore) {
+      // Verificar se já existe distribuidor com mesmo apelido ou ID
+      const existingDistributor = memoryStore.getDistributors().find(d => 
+        d.apelido === apelido || d.idDistribuidor === idDistribuidor
+      );
+
+      if (existingDistributor) {
+        return res.status(400).json({ 
+          error: 'Apelido ou ID do distribuidor já cadastrado' 
+        });
+      }
+
+      const distributorData = {
+        apelido,
+        razaoSocial,
+        idDistribuidor,
+        contato,
+        origem,
+        atendimento,
+        frete,
+        pedidoMinimo,
+        endereco,
+        observacoes,
+        createdBy: {
+          _id: req.user.id,
+          name: req.user.name,
+          email: req.user.email
+        }
+      };
+
+      const distributor = memoryStore.createDistributor(distributorData);
+      return res.status(201).json({ data: distributor });
+    }
+
     const distributor = new Distributor({
       apelido,
       razaoSocial,
@@ -192,6 +246,17 @@ router.put('/:id', auth, async (req, res) => {
 // DELETE /api/distributors/:id - Deletar distribuidor
 router.delete('/:id', auth, async (req, res) => {
   try {
+    // Usar dados em memória se o banco não estiver conectado
+    if (req.useMemoryStore) {
+      const distributor = memoryStore.deleteDistributor(req.params.id);
+      
+      if (!distributor) {
+        return res.status(404).json({ error: 'Distribuidor não encontrado' });
+      }
+
+      return res.json({ message: 'Distribuidor deletado com sucesso' });
+    }
+
     const distributor = await Distributor.findOneAndDelete({
       _id: req.params.id,
       createdBy: {

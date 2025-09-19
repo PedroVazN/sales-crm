@@ -86,11 +86,9 @@ const setupModels = () => {
 // Middleware para verificar conexão
 const checkConnection = (req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
-    return res.status(503).json({
-      success: false,
-      error: 'Banco de dados não conectado',
-      message: 'Serviço temporariamente indisponível'
-    });
+    console.log('⚠️ Banco de dados não conectado, usando dados em memória');
+    // Usar dados em memória em vez de retornar erro
+    req.useMemoryStore = true;
   }
   next();
 };
