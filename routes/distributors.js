@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Distributor = require('../models/DistributorNew');
+const DistributorOld = require('../models/Distributor');
 const { auth } = require('../middleware/auth');
 
 // GET /api/distributors - Listar todos os distribuidores
@@ -9,10 +10,11 @@ router.get('/', auth, async (req, res) => {
     const { page = 1, limit = 10, search, origem, isActive } = req.query;
     const skip = (page - 1) * limit;
 
-    let query = { 'createdBy._id': req.user.id };
+    // Buscar distribuidores novos (estrutura atual)
+    let queryNew = { 'createdBy._id': req.user.id };
     
     if (search) {
-      query.$or = [
+      queryNew.$or = [
         { apelido: { $regex: search, $options: 'i' } },
         { razaoSocial: { $regex: search, $options: 'i' } },
         { idDistribuidor: { $regex: search, $options: 'i' } },
@@ -22,20 +24,90 @@ router.get('/', auth, async (req, res) => {
     }
     
     if (origem) {
-      query.origem = origem;
+      queryNew.origem = origem;
     }
     
     if (isActive !== undefined) {
-      query.isActive = isActive === 'true';
+      queryNew.isActive = isActive === 'true';
     }
 
-    const distributors = await Distributor.find(query)
-      .populate('createdBy', 'name email')
-      .sort({ apelido: 1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    // Buscar distribuidores antigos (estrutura antiga)
+    let queryOld = {};
+    
+    if (search) {
+      queryOld.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (isActive !== undefined) {
+      queryOld.isActive = isActive === 'true';
+    }
 
-    const total = await Distributor.countDocuments(query);
+    // Buscar em ambos os modelos
+    const [distributorsNew, distributorsOld] = await Promise.all([
+      Distributor.find(queryNew).populate('createdBy', 'name email'),
+      DistributorOld.find(queryOld)
+    ]);
+
+    // Converter distribuidores antigos para formato novo
+    const convertedOld = distributorsOld.map(dist => ({
+      _id: dist._id,
+      apelido: dist.name || 'N/A',
+      razaoSocial: dist.name || 'N/A',
+      idDistribuidor: dist._id.toString().slice(-6).toUpperCase(),
+      contato: {
+        nome: dist.contactPerson?.name || dist.name || 'N/A',
+        email: dist.email || 'N/A',
+        telefone: dist.phone || 'N/A',
+        cargo: dist.contactPerson?.position || 'N/A'
+      },
+      origem: 'Sistema Antigo',
+      atendimento: {
+        horario: 'N/A',
+        dias: 'N/A',
+        observacoes: 'Migrado do sistema antigo'
+      },
+      frete: {
+        tipo: 'CIF',
+        valor: 0,
+        prazo: 0,
+        observacoes: 'N/A'
+      },
+      pedidoMinimo: {
+        valor: 0,
+        observacoes: 'N/A'
+      },
+      endereco: {
+        cep: dist.address?.zipCode || 'N/A',
+        logradouro: dist.address?.street || 'N/A',
+        numero: dist.address?.number || 'N/A',
+        complemento: dist.address?.complement || 'N/A',
+        bairro: dist.address?.neighborhood || 'N/A',
+        cidade: dist.address?.city || 'N/A',
+        uf: dist.address?.state || 'N/A'
+      },
+      isActive: dist.isActive,
+      observacoes: dist.notes || 'Migrado do sistema antigo',
+      createdBy: {
+        _id: '68c1afbcf906c14a8e7e8ff7',
+        name: 'Admin SellOne',
+        email: 'admin@sellone.com'
+      },
+      createdAt: dist.createdAt,
+      updatedAt: dist.updatedAt,
+      __v: dist.__v
+    }));
+
+    // Combinar e ordenar todos os distribuidores
+    const allDistributors = [...distributorsNew, ...convertedOld]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // Aplicar paginação
+    const total = allDistributors.length;
+    const distributors = allDistributors.slice(skip, skip + parseInt(limit));
 
     res.json({
       data: distributors,
