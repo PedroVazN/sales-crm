@@ -21,7 +21,7 @@
     }
   },
   "regions": ["iad1"],
-  "buildCommand": "",
+  "buildCommand": "echo 'No build needed for Node.js backend'",
   "outputDirectory": ".",
   "installCommand": "npm install"
 }
