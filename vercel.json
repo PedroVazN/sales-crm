@@ -20,5 +20,8 @@
       "maxDuration": 30
     }
   },
-  "regions": ["iad1"]
+  "regions": ["iad1"],
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "installCommand": "npm install"
 }
