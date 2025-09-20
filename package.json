@@ -1,7 +1,7 @@
 {
-  "name": "sellone-backend",
-  "version": "2.0.2",
-  "description": "SellOne CRM Backend API",
+  "name": "sellone-backend-api",
+  "version": "3.0.0",
+  "description": "SellOne CRM Backend API - Nova Versão",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -15,7 +15,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["crm", "sales", "api", "mongodb"],
+  "keywords": ["crm", "sales", "api", "mongodb", "sellone"],
   "author": "SellOne Team",
   "license": "MIT"
 }
