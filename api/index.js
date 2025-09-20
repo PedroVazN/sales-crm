@@ -2,18 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
-// Importar modelos
-const User = require('../models/User');
-const Client = require('../models/Client');
-const Product = require('../models/Product');
-const Sale = require('../models/Sale');
-const Proposal = require('../models/Proposal');
-const Distributor = require('../models/DistributorNew');
-const Event = require('../models/Event');
-const Goal = require('../models/Goal');
-const Notification = require('../models/Notification');
-const PriceList = require('../models/PriceList');
-
 const app = express();
 
 // Middlewares
@@ -55,19 +43,6 @@ const connectDB = async () => {
   }
 };
 
-// Middleware para verificar conexão
-const checkDB = async (req, res, next) => {
-  const isConnected = await connectDB();
-  if (!isConnected) {
-    return res.status(503).json({
-      success: false,
-      error: "Banco de dados não conectado",
-      message: "Serviço temporariamente indisponível"
-    });
-  }
-  next();
-};
-
 // Rota principal
 app.get('/', (req, res) => {
   res.json({
@@ -104,55 +79,56 @@ app.get('/api/test-db', async (req, res) => {
   });
 });
 
-// Rotas da API com verificação de banco
-app.use('/api', checkDB);
-
-// Rota de clientes
+// Rota de clientes (mock data por enquanto)
 app.get('/api/clients', async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, uf, classificacao, isActive } = req.query;
-    const skip = (page - 1) * limit;
-
-    let query = {};
-    
-    if (search) {
-      query.$or = [
-        { razaoSocial: { $regex: search, $options: 'i' } },
-        { nomeFantasia: { $regex: search, $options: 'i' } },
-        { cnpj: { $regex: search, $options: 'i' } },
-        { 'contato.nome': { $regex: search, $options: 'i' } },
-        { 'contato.email': { $regex: search, $options: 'i' } }
-      ];
-    }
-    
-    if (uf) {
-      query['endereco.uf'] = uf;
-    }
-    
-    if (classificacao) {
-      query.classificacao = classificacao;
-    }
-    
-    if (isActive !== undefined) {
-      query.isActive = isActive === 'true';
-    }
-
-    const clients = await Client.find(query)
-      .populate('createdBy', 'name email')
-      .sort({ razaoSocial: 1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Client.countDocuments(query);
+    const mockClients = [
+      {
+        _id: '1',
+        razaoSocial: 'Cliente Teste 1',
+        nomeFantasia: 'Teste 1',
+        cnpj: '12.345.678/0001-90',
+        contato: {
+          nome: 'João Silva',
+          email: 'joao@teste.com',
+          telefone: '(11) 99999-9999'
+        },
+        endereco: {
+          uf: 'SP',
+          cidade: 'São Paulo'
+        },
+        classificacao: 'A',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        _id: '2',
+        razaoSocial: 'Cliente Teste 2',
+        nomeFantasia: 'Teste 2',
+        cnpj: '98.765.432/0001-10',
+        contato: {
+          nome: 'Maria Santos',
+          email: 'maria@teste.com',
+          telefone: '(11) 88888-8888'
+        },
+        endereco: {
+          uf: 'RJ',
+          cidade: 'Rio de Janeiro'
+        },
+        classificacao: 'B',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      }
+    ];
 
     res.json({
       success: true,
-      data: clients,
+      data: mockClients,
       pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit),
-        total,
-        limit: parseInt(limit)
+        current: 1,
+        pages: 1,
+        total: 2,
+        limit: 10
       },
       message: 'Clientes carregados com sucesso'
     });
@@ -165,42 +141,40 @@ app.get('/api/clients', async (req, res) => {
   }
 });
 
-// Rota de produtos
+// Rota de produtos (mock data por enquanto)
 app.get('/api/products', async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, category } = req.query;
-    const skip = (page - 1) * limit;
-
-    let query = {};
-    
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { sku: { $regex: search, $options: 'i' } },
-        { barcode: { $regex: search, $options: 'i' } }
-      ];
-    }
-    
-    if (category) {
-      query.category = category;
-    }
-
-    const products = await Product.find(query)
-      .sort({ name: 1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Product.countDocuments(query);
+    const mockProducts = [
+      {
+        _id: '1',
+        name: 'Produto Teste 1',
+        description: 'Descrição do produto 1',
+        price: 100.00,
+        category: 'Categoria A',
+        sku: 'SKU001',
+        stock: 10,
+        createdAt: new Date().toISOString()
+      },
+      {
+        _id: '2',
+        name: 'Produto Teste 2',
+        description: 'Descrição do produto 2',
+        price: 200.00,
+        category: 'Categoria B',
+        sku: 'SKU002',
+        stock: 5,
+        createdAt: new Date().toISOString()
+      }
+    ];
 
     res.json({
       success: true,
-      data: products,
+      data: mockProducts,
       pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit),
-        total,
-        limit: parseInt(limit)
+        current: 1,
+        pages: 1,
+        total: 2,
+        limit: 10
       },
       message: 'Produtos carregados com sucesso'
     });
@@ -213,39 +187,52 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// Rota de vendas
+// Rota de vendas (mock data por enquanto)
 app.get('/api/sales', async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, paymentStatus } = req.query;
-    const skip = (page - 1) * limit;
-
-    let query = {};
-    
-    if (status) {
-      query.status = status;
-    }
-    
-    if (paymentStatus) {
-      query.paymentStatus = paymentStatus;
-    }
-
-    const sales = await Sale.find(query)
-      .populate('customer', 'name email')
-      .populate('seller', 'name email')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Sale.countDocuments(query);
+    const mockSales = [
+      {
+        _id: '1',
+        saleNumber: 'V001',
+        total: 300.00,
+        status: 'finalizada',
+        paymentStatus: 'pago',
+        customer: {
+          name: 'Cliente Teste 1',
+          email: 'cliente1@teste.com'
+        },
+        seller: {
+          name: 'Vendedor Teste',
+          email: 'vendedor@teste.com'
+        },
+        createdAt: new Date().toISOString()
+      },
+      {
+        _id: '2',
+        saleNumber: 'V002',
+        total: 150.00,
+        status: 'pendente',
+        paymentStatus: 'pendente',
+        customer: {
+          name: 'Cliente Teste 2',
+          email: 'cliente2@teste.com'
+        },
+        seller: {
+          name: 'Vendedor Teste',
+          email: 'vendedor@teste.com'
+        },
+        createdAt: new Date().toISOString()
+      }
+    ];
 
     res.json({
       success: true,
-      data: sales,
+      data: mockSales,
       pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit),
-        total,
-        limit: parseInt(limit)
+        current: 1,
+        pages: 1,
+        total: 2,
+        limit: 10
       },
       message: 'Vendas carregadas com sucesso'
     });
@@ -258,41 +245,36 @@ app.get('/api/sales', async (req, res) => {
   }
 });
 
-// Rota de usuários
+// Rota de usuários (mock data por enquanto)
 app.get('/api/users', async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, role } = req.query;
-    const skip = (page - 1) * limit;
-
-    let query = {};
-    
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
-      ];
-    }
-    
-    if (role) {
-      query.role = role;
-    }
-
-    const users = await User.find(query)
-      .select('-password')
-      .sort({ name: 1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await User.countDocuments(query);
+    const mockUsers = [
+      {
+        _id: '1',
+        name: 'Usuário Admin',
+        email: 'admin@sellone.com',
+        role: 'admin',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        _id: '2',
+        name: 'Vendedor Teste',
+        email: 'vendedor@sellone.com',
+        role: 'vendedor',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      }
+    ];
 
     res.json({
       success: true,
-      data: users,
+      data: mockUsers,
       pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit),
-        total,
-        limit: parseInt(limit)
+        current: 1,
+        pages: 1,
+        total: 2,
+        limit: 10
       },
       message: 'Usuários carregados com sucesso'
     });
@@ -305,44 +287,36 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-// Rota de propostas
+// Rota de propostas (mock data por enquanto)
 app.get('/api/proposals', async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, search } = req.query;
-    const skip = (page - 1) * limit;
-
-    let query = {};
-    
-    if (search) {
-      query.$or = [
-        { proposalNumber: { $regex: search, $options: 'i' } },
-        { 'client.name': { $regex: search, $options: 'i' } },
-        { 'client.email': { $regex: search, $options: 'i' } }
-      ];
-    }
-    
-    if (status) {
-      query.status = status;
-    }
-
-    const proposals = await Proposal.find(query)
-      .populate('client', 'name email phone')
-      .populate('seller', 'name email')
-      .populate('distributor', 'apelido razaoSocial')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Proposal.countDocuments(query);
+    const mockProposals = [
+      {
+        _id: '1',
+        proposalNumber: 'P001',
+        status: 'ativa',
+        client: {
+          name: 'Cliente Teste 1',
+          email: 'cliente1@teste.com',
+          phone: '(11) 99999-9999'
+        },
+        seller: {
+          name: 'Vendedor Teste',
+          email: 'vendedor@teste.com'
+        },
+        total: 500.00,
+        createdAt: new Date().toISOString()
+      }
+    ];
 
     res.json({
       success: true,
-      data: proposals,
+      data: mockProposals,
       pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit),
-        total,
-        limit: parseInt(limit)
+        current: 1,
+        pages: 1,
+        total: 1,
+        limit: 10
       },
       message: 'Propostas carregadas com sucesso'
     });
@@ -355,46 +329,32 @@ app.get('/api/proposals', async (req, res) => {
   }
 });
 
-// Rota de distribuidores
+// Rota de distribuidores (mock data por enquanto)
 app.get('/api/distributors', async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, origem, isActive } = req.query;
-    const skip = (page - 1) * limit;
-
-    let query = {};
-    
-    if (search) {
-      query.$or = [
-        { apelido: { $regex: search, $options: 'i' } },
-        { razaoSocial: { $regex: search, $options: 'i' } },
-        { 'contato.nome': { $regex: search, $options: 'i' } }
-      ];
-    }
-    
-    if (origem) {
-      query.origem = origem;
-    }
-    
-    if (isActive !== undefined) {
-      query.isActive = isActive === 'true';
-    }
-
-    const distributors = await Distributor.find(query)
-      .populate('createdBy', 'name email')
-      .sort({ apelido: 1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Distributor.countDocuments(query);
+    const mockDistributors = [
+      {
+        _id: '1',
+        apelido: 'Distribuidor Teste 1',
+        razaoSocial: 'Distribuidor Teste 1 LTDA',
+        contato: {
+          nome: 'João Distribuidor',
+          telefone: '(11) 77777-7777'
+        },
+        origem: 'Sistema',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      }
+    ];
 
     res.json({
       success: true,
-      data: distributors,
+      data: mockDistributors,
       pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit),
-        total,
-        limit: parseInt(limit)
+        current: 1,
+        pages: 1,
+        total: 1,
+        limit: 10
       },
       message: 'Distribuidores carregados com sucesso'
     });
@@ -407,50 +367,22 @@ app.get('/api/distributors', async (req, res) => {
   }
 });
 
-// Rota de estatísticas
+// Rota de estatísticas (mock data por enquanto)
 app.get('/api/stats', async (req, res) => {
   try {
-    const totalClients = await Client.countDocuments();
-    const totalProducts = await Product.countDocuments();
-    const totalSales = await Sale.countDocuments();
-    const totalUsers = await User.countDocuments();
-    const totalProposals = await Proposal.countDocuments();
-
-    // Calcular vendas do mês atual
-    const currentMonth = new Date();
-    currentMonth.setDate(1);
-    currentMonth.setHours(0, 0, 0, 0);
-
-    const salesThisMonth = await Sale.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: currentMonth },
-          status: 'finalizada'
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: '$total' },
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    const monthlyRevenue = salesThisMonth.length > 0 ? salesThisMonth[0].total : 0;
-    const monthlySales = salesThisMonth.length > 0 ? salesThisMonth[0].count : 0;
+    const mockStats = {
+      totalClients: 2,
+      totalProducts: 2,
+      totalSales: 2,
+      totalUsers: 2,
+      totalProposals: 1,
+      monthlyRevenue: 450.00,
+      monthlySales: 2
+    };
 
     res.json({
       success: true,
-      data: {
-        totalClients,
-        totalProducts,
-        totalSales,
-        totalUsers,
-        totalProposals,
-        monthlyRevenue,
-        monthlySales
-      },
+      data: mockStats,
       message: 'Estatísticas carregadas com sucesso'
     });
   } catch (error) {
