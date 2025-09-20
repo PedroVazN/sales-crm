@@ -2,6 +2,18 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
+// Importar modelos
+const User = require('./models/User');
+const Client = require('./models/Client');
+const Product = require('./models/Product');
+const Sale = require('./models/Sale');
+const Proposal = require('./models/Proposal');
+const Distributor = require('./models/DistributorNew');
+const Event = require('./models/Event');
+const Goal = require('./models/Goal');
+const Notification = require('./models/Notification');
+const PriceList = require('./models/PriceList');
+
 const app = express();
 
 // Middlewares
@@ -53,10 +65,16 @@ const connectDB = async () => {
   }
 };
 
-// Middleware para verificar conexão (opcional)
+// Middleware para verificar conexão
 const checkDB = async (req, res, next) => {
-  // Por enquanto, sempre permitir acesso mesmo sem banco
-  // Em produção, você pode habilitar a verificação do banco
+  const isConnected = await connectDB();
+  if (!isConnected) {
+    return res.status(503).json({
+      success: false,
+      error: "Banco de dados não conectado",
+      message: "Serviço temporariamente indisponível"
+    });
+  }
   next();
 };
 
@@ -133,32 +151,57 @@ app.get('/api/reconnect', async (req, res) => {
 // Rotas da API com verificação de banco
 app.use('/api', checkDB);
 
-// Rota de clientes simples
+// Rota de clientes com dados reais
 app.get('/api/clients', async (req, res) => {
   try {
-    const clients = [
-      {
-        _id: '1',
-        name: 'Cliente Teste 1',
-        email: 'cliente1@teste.com',
-        phone: '(11) 99999-9999',
-        createdAt: new Date().toISOString()
-      },
-      {
-        _id: '2',
-        name: 'Cliente Teste 2',
-        email: 'cliente2@teste.com',
-        phone: '(11) 88888-8888',
-        createdAt: new Date().toISOString()
-      }
-    ];
+    const { page = 1, limit = 10, search, uf, classificacao, isActive } = req.query;
+    const skip = (page - 1) * limit;
+
+    let query = {};
+    
+    if (search) {
+      query.$or = [
+        { razaoSocial: { $regex: search, $options: 'i' } },
+        { nomeFantasia: { $regex: search, $options: 'i' } },
+        { cnpj: { $regex: search, $options: 'i' } },
+        { 'contato.nome': { $regex: search, $options: 'i' } },
+        { 'contato.email': { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (uf) {
+      query['endereco.uf'] = uf;
+    }
+    
+    if (classificacao) {
+      query.classificacao = classificacao;
+    }
+    
+    if (isActive !== undefined) {
+      query.isActive = isActive === 'true';
+    }
+
+    const clients = await Client.find(query)
+      .populate('createdBy', 'name email')
+      .sort({ razaoSocial: 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Client.countDocuments(query);
 
     res.json({
       success: true,
       data: clients,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / limit),
+        total,
+        limit: parseInt(limit)
+      },
       message: 'Clientes carregados com sucesso'
     });
   } catch (error) {
+    console.error('Erro ao buscar clientes:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -166,34 +209,47 @@ app.get('/api/clients', async (req, res) => {
   }
 });
 
-// Rota de produtos simples
+// Rota de produtos com dados reais
 app.get('/api/products', async (req, res) => {
   try {
-    const products = [
-      {
-        _id: '1',
-        name: 'Produto Teste 1',
-        price: 100.00,
-        category: 'Categoria A',
-        stock: 10,
-        createdAt: new Date().toISOString()
-      },
-      {
-        _id: '2',
-        name: 'Produto Teste 2',
-        price: 200.00,
-        category: 'Categoria B',
-        stock: 5,
-        createdAt: new Date().toISOString()
-      }
-    ];
+    const { page = 1, limit = 10, search, category } = req.query;
+    const skip = (page - 1) * limit;
+
+    let query = {};
+    
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { sku: { $regex: search, $options: 'i' } },
+        { barcode: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (category) {
+      query.category = category;
+    }
+
+    const products = await Product.find(query)
+      .sort({ name: 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Product.countDocuments(query);
 
     res.json({
       success: true,
       data: products,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / limit),
+        total,
+        limit: parseInt(limit)
+      },
       message: 'Produtos carregados com sucesso'
     });
   } catch (error) {
+    console.error('Erro ao buscar produtos:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -201,32 +257,44 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// Rota de vendas simples
+// Rota de vendas com dados reais
 app.get('/api/sales', async (req, res) => {
   try {
-    const sales = [
-      {
-        _id: '1',
-        saleNumber: 'V001',
-        total: 300.00,
-        status: 'finalizada',
-        createdAt: new Date().toISOString()
-      },
-      {
-        _id: '2',
-        saleNumber: 'V002',
-        total: 150.00,
-        status: 'pendente',
-        createdAt: new Date().toISOString()
-      }
-    ];
+    const { page = 1, limit = 10, status, paymentStatus } = req.query;
+    const skip = (page - 1) * limit;
+
+    let query = {};
+    
+    if (status) {
+      query.status = status;
+    }
+    
+    if (paymentStatus) {
+      query.paymentStatus = paymentStatus;
+    }
+
+    const sales = await Sale.find(query)
+      .populate('customer', 'name email')
+      .populate('seller', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Sale.countDocuments(query);
 
     res.json({
       success: true,
       data: sales,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / limit),
+        total,
+        limit: parseInt(limit)
+      },
       message: 'Vendas carregadas com sucesso'
     });
   } catch (error) {
+    console.error('Erro ao buscar vendas:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -234,34 +302,203 @@ app.get('/api/sales', async (req, res) => {
   }
 });
 
-// Rota de usuários simples
+// Rota de usuários com dados reais
 app.get('/api/users', async (req, res) => {
   try {
-    const users = [
-      {
-        _id: '1',
-        name: 'Usuário Admin',
-        email: 'admin@sellone.com',
-        role: 'admin',
-        isActive: true,
-        createdAt: new Date().toISOString()
-      },
-      {
-        _id: '2',
-        name: 'Vendedor Teste',
-        email: 'vendedor@sellone.com',
-        role: 'vendedor',
-        isActive: true,
-        createdAt: new Date().toISOString()
-      }
-    ];
+    const { page = 1, limit = 10, search, role } = req.query;
+    const skip = (page - 1) * limit;
+
+    let query = {};
+    
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (role) {
+      query.role = role;
+    }
+
+    const users = await User.find(query)
+      .select('-password')
+      .sort({ name: 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await User.countDocuments(query);
 
     res.json({
       success: true,
       data: users,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / limit),
+        total,
+        limit: parseInt(limit)
+      },
       message: 'Usuários carregados com sucesso'
     });
   } catch (error) {
+    console.error('Erro ao buscar usuários:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Rota de propostas com dados reais
+app.get('/api/proposals', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, search } = req.query;
+    const skip = (page - 1) * limit;
+
+    let query = {};
+    
+    if (search) {
+      query.$or = [
+        { proposalNumber: { $regex: search, $options: 'i' } },
+        { 'client.name': { $regex: search, $options: 'i' } },
+        { 'client.email': { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (status) {
+      query.status = status;
+    }
+
+    const proposals = await Proposal.find(query)
+      .populate('client', 'name email phone')
+      .populate('seller', 'name email')
+      .populate('distributor', 'apelido razaoSocial')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Proposal.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: proposals,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / limit),
+        total,
+        limit: parseInt(limit)
+      },
+      message: 'Propostas carregadas com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao buscar propostas:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Rota de distribuidores com dados reais
+app.get('/api/distributors', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search, origem, isActive } = req.query;
+    const skip = (page - 1) * limit;
+
+    let query = {};
+    
+    if (search) {
+      query.$or = [
+        { apelido: { $regex: search, $options: 'i' } },
+        { razaoSocial: { $regex: search, $options: 'i' } },
+        { 'contato.nome': { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (origem) {
+      query.origem = origem;
+    }
+    
+    if (isActive !== undefined) {
+      query.isActive = isActive === 'true';
+    }
+
+    const distributors = await Distributor.find(query)
+      .populate('createdBy', 'name email')
+      .sort({ apelido: 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Distributor.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: distributors,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / limit),
+        total,
+        limit: parseInt(limit)
+      },
+      message: 'Distribuidores carregados com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao buscar distribuidores:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Rota de estatísticas gerais
+app.get('/api/stats', async (req, res) => {
+  try {
+    const totalClients = await Client.countDocuments();
+    const totalProducts = await Product.countDocuments();
+    const totalSales = await Sale.countDocuments();
+    const totalUsers = await User.countDocuments();
+    const totalProposals = await Proposal.countDocuments();
+
+    // Calcular vendas do mês atual
+    const currentMonth = new Date();
+    currentMonth.setDate(1);
+    currentMonth.setHours(0, 0, 0, 0);
+
+    const salesThisMonth = await Sale.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: currentMonth },
+          status: 'finalizada'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$total' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const monthlyRevenue = salesThisMonth.length > 0 ? salesThisMonth[0].total : 0;
+    const monthlySales = salesThisMonth.length > 0 ? salesThisMonth[0].count : 0;
+
+    res.json({
+      success: true,
+      data: {
+        totalClients,
+        totalProducts,
+        totalSales,
+        totalUsers,
+        totalProposals,
+        monthlyRevenue,
+        monthlySales
+      },
+      message: 'Estatísticas carregadas com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas:', error);
     res.status(500).json({
       success: false,
       error: error.message
