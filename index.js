@@ -81,8 +81,8 @@ const checkDB = async (req, res, next) => {
 // Rota principal
 app.get('/', (req, res) => {
   res.json({
-    message: 'SellOne API v2.0 - Backend Principal',
-    version: '2.0.0',
+    message: 'SellOne API v2.0 - Backend Principal - PRONTO PARA ENTREGA',
+    version: '2.0.1',
     status: 'online',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'production'
