@@ -2,21 +2,21 @@
   "version": 2,
   "builds": [
     {
-      "src": "vercel-server.js",
+      "src": "complete-server.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "vercel-server.js"
+      "dest": "complete-server.js"
     }
   ],
   "env": {
     "NODE_ENV": "production"
   },
   "functions": {
-    "vercel-server.js": {
+    "complete-server.js": {
       "maxDuration": 30
     }
   },

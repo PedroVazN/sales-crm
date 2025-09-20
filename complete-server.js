@@ -184,28 +184,6 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// Rota de teste para verificar conexão com MongoDB
-app.get('/api/test-db', async (req, res) => {
-  try {
-    const isConnected = mongoose.connection.readyState === 1;
-    
-    res.json({
-      message: 'Teste de conexão com MongoDB',
-      connected: isConnected,
-      state: mongoose.connection.readyState,
-      host: mongoose.connection.host || 'N/A',
-      database: mongoose.connection.name || 'N/A',
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: 'Erro ao testar conexão com MongoDB',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
