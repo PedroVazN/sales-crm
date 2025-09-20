@@ -744,7 +744,6 @@ class ApiService {
               idDistribuidor: 'DIST001', // Valor padrão
               contato: {
                 nome: priceList.distributor.contato.nome,
-                email: 'contato@distribuidor.com', // Valor padrão
                 telefone: priceList.distributor.contato.telefone,
                 cargo: 'Representante'
               },
