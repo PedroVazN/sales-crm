@@ -8,7 +8,8 @@ const auth = async (req, res, next) => {
     // Se não há token ou é o token dummy do frontend, usar usuário temporário
     if (!token || token === 'dummy-token') {
       req.user = {
-        id: '68c1afbcf906c14a8e7e8ff7', // ObjectId válido do MongoDB
+        _id: '68c1afbcf906c14a8e7e8ff7', // ObjectId válido do MongoDB
+        id: '68c1afbcf906c14a8e7e8ff7', // Para compatibilidade
         name: 'Usuário Temporário',
         email: 'temp@example.com',
         role: 'admin'
@@ -24,6 +25,7 @@ const auth = async (req, res, next) => {
       if (!user || !user.isActive) {
         // Se usuário não encontrado ou inativo, usar usuário temporário
         req.user = {
+          _id: '68c1afbcf906c14a8e7e8ff7',
           id: '68c1afbcf906c14a8e7e8ff7',
           name: 'Usuário Temporário',
           email: 'temp@example.com',
@@ -35,8 +37,10 @@ const auth = async (req, res, next) => {
       req.user = user;
       next();
     } catch (jwtError) {
+      console.log('Erro na validação JWT:', jwtError.message);
       // Se erro na validação do JWT, usar usuário temporário
       req.user = {
+        _id: '68c1afbcf906c14a8e7e8ff7',
         id: '68c1afbcf906c14a8e7e8ff7',
         name: 'Usuário Temporário',
         email: 'temp@example.com',
@@ -48,6 +52,7 @@ const auth = async (req, res, next) => {
     console.error('Erro na autenticação:', error);
     // Em caso de erro, usar usuário temporário
     req.user = {
+      _id: '68c1afbcf906c14a8e7e8ff7',
       id: '68c1afbcf906c14a8e7e8ff7',
       name: 'Usuário Temporário',
       email: 'temp@example.com',
