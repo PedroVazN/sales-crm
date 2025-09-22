@@ -4,6 +4,13 @@
     {
       "src": "api/index.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "sales-crm/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
     }
   ],
   "routes": [
@@ -12,8 +19,12 @@
       "dest": "api/index.js"
     },
     {
+      "src": "/static/(.*)",
+      "dest": "/sales-crm/build/static/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "public/index.html"
+      "dest": "/sales-crm/build/index.html"
     }
   ],
   "env": {
