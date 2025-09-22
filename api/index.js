@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Função de conexão com MongoDB
 const connectDB = async () => {
   try {
+    // Verificar se já está conectado
     if (mongoose.connection.readyState === 1) {
       console.log('✅ MongoDB já conectado');
       return true;
@@ -22,23 +23,61 @@ const connectDB = async () => {
 
     const mongoUri = process.env.MONGODB_URI;
     if (!mongoUri) {
-      console.log('❌ MONGODB_URI não encontrada');
+      console.log('❌ MONGODB_URI não encontrada nas variáveis de ambiente');
+      console.log('💡 Configure MONGODB_URI na Vercel Dashboard');
       return false;
     }
 
     console.log('🔗 Conectando ao MongoDB...');
+    console.log('URI (primeiros 20 chars):', mongoUri.substring(0, 20) + '...');
+    
+    // Configurações otimizadas para Vercel/Serverless
     await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 20000,
-      connectTimeoutMS: 10000,
-      maxPoolSize: 1,
-      bufferCommands: false
+      maxPoolSize: 1, // Reduzido para serverless
+      serverSelectionTimeoutMS: 10000, // 10 segundos
+      socketTimeoutMS: 20000, // 20 segundos
+      connectTimeoutMS: 10000, // 10 segundos
+      retryWrites: true,
+      w: 'majority',
+      bufferCommands: false, // Desabilitar buffering para serverless
+      bufferMaxEntries: 0, // Desabilitar buffering
+      useNewUrlParser: true,
+      useUnifiedTopology: true
     });
 
-    console.log('✅ MongoDB conectado com sucesso');
+    console.log(`✅ MongoDB conectado: ${mongoose.connection.host}`);
+    console.log(`📊 Database: ${mongoose.connection.name}`);
+    console.log(`🔌 Estado: ${mongoose.connection.readyState}`);
+    
     return true;
   } catch (error) {
     console.error('❌ Erro ao conectar MongoDB:', error.message);
+    console.error('Stack trace:', error.stack);
+    
+    // Tentar reconectar uma vez em caso de erro
+    if (mongoose.connection.readyState === 0) {
+      console.log('🔄 Tentando reconectar...');
+      try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+          maxPoolSize: 1,
+          serverSelectionTimeoutMS: 5000,
+          socketTimeoutMS: 10000,
+          connectTimeoutMS: 5000,
+          retryWrites: true,
+          w: 'majority',
+          bufferCommands: false,
+          bufferMaxEntries: 0,
+          useNewUrlParser: true,
+          useUnifiedTopology: true
+        });
+        console.log('✅ Reconexão bem-sucedida');
+        return true;
+      } catch (retryError) {
+        console.error('❌ Falha na reconexão:', retryError.message);
+        return false;
+      }
+    }
+    
     return false;
   }
 };
@@ -65,70 +104,117 @@ app.get('/api/test', (req, res) => {
 
 // Rota de teste do banco
 app.get('/api/test-db', async (req, res) => {
-  const isConnected = await connectDB();
-  res.json({
-    success: true,
-    database: {
-      status: isConnected ? 'Conectado' : 'Desconectado',
-      readyState: mongoose.connection.readyState
-    },
-    environment: {
-      nodeEnv: process.env.NODE_ENV,
-      hasMongoUri: !!process.env.MONGODB_URI
-    }
-  });
-});
-
-// Rota de clientes (mock data por enquanto)
-app.get('/api/clients', async (req, res) => {
   try {
-    const mockClients = [
-      {
-        _id: '1',
-        razaoSocial: 'Cliente Teste 1',
-        nomeFantasia: 'Teste 1',
-        cnpj: '12.345.678/0001-90',
-        contato: {
-          nome: 'João Silva',
-          email: 'joao@teste.com',
-          telefone: '(11) 99999-9999'
-        },
-        endereco: {
-          uf: 'SP',
-          cidade: 'São Paulo'
-        },
-        classificacao: 'A',
-        isActive: true,
-        createdAt: new Date().toISOString()
-      },
-      {
-        _id: '2',
-        razaoSocial: 'Cliente Teste 2',
-        nomeFantasia: 'Teste 2',
-        cnpj: '98.765.432/0001-10',
-        contato: {
-          nome: 'Maria Santos',
-          email: 'maria@teste.com',
-          telefone: '(11) 88888-8888'
-        },
-        endereco: {
-          uf: 'RJ',
-          cidade: 'Rio de Janeiro'
-        },
-        classificacao: 'B',
-        isActive: true,
-        createdAt: new Date().toISOString()
+    const isConnected = await connectDB();
+    
+    // Verificar se consegue fazer uma operação simples no banco
+    let dbTest = false;
+    if (isConnected) {
+      try {
+        // Tentar listar as coleções para verificar se a conexão está funcionando
+        const collections = await mongoose.connection.db.listCollections().toArray();
+        dbTest = true;
+        console.log('✅ Teste de banco bem-sucedido, coleções encontradas:', collections.length);
+      } catch (dbError) {
+        console.error('❌ Erro no teste de banco:', dbError.message);
+        dbTest = false;
       }
-    ];
+    }
 
     res.json({
       success: true,
-      data: mockClients,
+      database: {
+        status: isConnected ? 'Conectado' : 'Desconectado',
+        readyState: mongoose.connection.readyState,
+        testPassed: dbTest,
+        host: mongoose.connection.host || 'N/A',
+        name: mongoose.connection.name || 'N/A'
+      },
+      environment: {
+        nodeEnv: process.env.NODE_ENV,
+        hasMongoUri: !!process.env.MONGODB_URI,
+        mongoUriLength: process.env.MONGODB_URI ? process.env.MONGODB_URI.length : 0,
+        mongoUriStart: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 20) + '...' : 'N/A'
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Erro no teste de banco:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      database: {
+        status: 'Erro',
+        readyState: mongoose.connection.readyState
+      },
+      environment: {
+        nodeEnv: process.env.NODE_ENV,
+        hasMongoUri: !!process.env.MONGODB_URI
+      }
+    });
+  }
+});
+
+// Rota de clientes (conexão real com MongoDB)
+app.get('/api/clients', async (req, res) => {
+  try {
+    // Conectar ao banco de dados
+    const isConnected = await connectDB();
+    if (!isConnected) {
+      return res.status(503).json({
+        success: false,
+        error: 'Banco de dados não conectado',
+        message: 'Verifique a configuração do MongoDB'
+      });
+    }
+
+    // Importar o modelo Client
+    const Client = require('../models/Client');
+    
+    // Parâmetros de paginação
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Filtros
+    const filter = {};
+    if (req.query.search) {
+      filter.$or = [
+        { razaoSocial: { $regex: req.query.search, $options: 'i' } },
+        { nomeFantasia: { $regex: req.query.search, $options: 'i' } },
+        { cnpj: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+    if (req.query.classificacao) {
+      filter.classificacao = req.query.classificacao;
+    }
+    if (req.query.uf) {
+      filter['endereco.uf'] = req.query.uf;
+    }
+    if (req.query.isActive !== undefined) {
+      filter.isActive = req.query.isActive === 'true';
+    }
+
+    // Buscar clientes
+    const clients = await Client.find(filter)
+      .populate('createdBy', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Contar total de clientes
+    const total = await Client.countDocuments(filter);
+    const pages = Math.ceil(total / limit);
+
+    res.json({
+      success: true,
+      data: clients,
       pagination: {
-        current: 1,
-        pages: 1,
-        total: 2,
-        limit: 10
+        current: page,
+        pages: pages,
+        total: total,
+        limit: limit
       },
       message: 'Clientes carregados com sucesso'
     });
@@ -136,7 +222,8 @@ app.get('/api/clients', async (req, res) => {
     console.error('Erro ao buscar clientes:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
+      message: 'Erro interno do servidor'
     });
   }
 });
