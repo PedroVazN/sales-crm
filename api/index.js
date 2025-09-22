@@ -228,6 +228,152 @@ app.get('/api/clients', async (req, res) => {
   }
 });
 
+// Rota de usuários (mock data por enquanto)
+app.get('/api/users', async (req, res) => {
+  try {
+    const mockUsers = [
+      {
+        _id: '1',
+        name: 'Usuário Admin',
+        email: 'admin@sellone.com',
+        role: 'admin',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        _id: '2',
+        name: 'Vendedor Teste',
+        email: 'vendedor@sellone.com',
+        role: 'vendedor',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      }
+    ];
+
+    res.json({
+      success: true,
+      data: mockUsers,
+      pagination: {
+        current: 1,
+        pages: 1,
+        total: 2,
+        limit: 10
+      },
+      message: 'Usuários carregados com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao buscar usuários:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Rota de produtos (mock data por enquanto)
+app.get('/api/products', async (req, res) => {
+  try {
+    const mockProducts = [
+      {
+        _id: '1',
+        name: 'Produto Teste 1',
+        description: 'Descrição do produto 1',
+        price: 100.00,
+        category: 'Categoria A',
+        sku: 'SKU001',
+        stock: 10,
+        createdAt: new Date().toISOString()
+      },
+      {
+        _id: '2',
+        name: 'Produto Teste 2',
+        description: 'Descrição do produto 2',
+        price: 200.00,
+        category: 'Categoria B',
+        sku: 'SKU002',
+        stock: 5,
+        createdAt: new Date().toISOString()
+      }
+    ];
+
+    res.json({
+      success: true,
+      data: mockProducts,
+      pagination: {
+        current: 1,
+        pages: 1,
+        total: 2,
+        limit: 10
+      },
+      message: 'Produtos carregados com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao buscar produtos:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Rota de vendas (mock data por enquanto)
+app.get('/api/sales', async (req, res) => {
+  try {
+    const mockSales = [
+      {
+        _id: '1',
+        saleNumber: 'V001',
+        total: 300.00,
+        status: 'finalizada',
+        paymentStatus: 'pago',
+        customer: {
+          name: 'Cliente Teste 1',
+          email: 'cliente1@teste.com'
+        },
+        seller: {
+          name: 'Vendedor Teste',
+          email: 'vendedor@teste.com'
+        },
+        createdAt: new Date().toISOString()
+      },
+      {
+        _id: '2',
+        saleNumber: 'V002',
+        total: 150.00,
+        status: 'pendente',
+        paymentStatus: 'pendente',
+        customer: {
+          name: 'Cliente Teste 2',
+          email: 'cliente2@teste.com'
+        },
+        seller: {
+          name: 'Vendedor Teste',
+          email: 'vendedor@teste.com'
+        },
+        createdAt: new Date().toISOString()
+      }
+    ];
+
+    res.json({
+      success: true,
+      data: mockSales,
+      pagination: {
+        current: 1,
+        pages: 1,
+        total: 2,
+        limit: 10
+      },
+      message: 'Vendas carregadas com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao buscar vendas:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Rota de health check
 app.get('/health', (req, res) => {
   res.json({
