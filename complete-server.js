@@ -184,14 +184,16 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor SellOne funcionando na porta ${PORT}`);
-  console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 Frontend: http://localhost:${PORT}`);
-  console.log(`🔗 API: http://localhost:${PORT}/api`);
-  console.log(`🔐 Login: admin@sellone.com / 123456`);
-});
+// Para Vercel, não precisamos do app.listen
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor SellOne funcionando na porta ${PORT}`);
+    console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌐 Frontend: http://localhost:${PORT}`);
+    console.log(`🔗 API: http://localhost:${PORT}/api`);
+    console.log(`🔐 Login: admin@sellone.com / 123456`);
+  });
+}
 
 module.exports = app;
