@@ -1,39 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/index.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "sales-crm/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "api/index.js"
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "/sales-crm/build/static/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/sales-crm/build/index.html"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
   "functions": {
     "api/index.js": {
       "maxDuration": 30
     }
-  },
-  "regions": ["iad1"]
+  }
 }
