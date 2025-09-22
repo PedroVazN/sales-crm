@@ -57,24 +57,63 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Importar modelo User
+    // Importar modelos
     const User = require('../models/User');
-    
-    // Buscar usuários
-    const users = await User.find({ isActive: true })
-      .select('-password')
-      .sort({ createdAt: -1 })
-      .lean();
+    const Client = require('../models/Client');
+    const Product = require('../models/Product');
+    const Sale = require('../models/Sale');
+    const Proposal = require('../models/Proposal');
+
+    // Calcular estatísticas
+    const [
+      totalUsers,
+      totalClients,
+      totalProducts,
+      totalSales,
+      totalProposals,
+      monthlyRevenue,
+      monthlySales
+    ] = await Promise.all([
+      User.countDocuments({ isActive: true }),
+      Client.countDocuments({ isActive: true }),
+      Product.countDocuments({ isActive: true }),
+      Sale.countDocuments(),
+      Proposal.countDocuments(),
+      Sale.aggregate([
+        {
+          $match: {
+            createdAt: {
+              $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+            }
+          }
+        },
+        { $group: { _id: null, total: { $sum: '$total' } } }
+      ]),
+      Sale.countDocuments({
+        createdAt: {
+          $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+        }
+      })
+    ]);
+
+    const stats = {
+      totalUsers,
+      totalClients,
+      totalProducts,
+      totalSales,
+      totalProposals,
+      monthlyRevenue: monthlyRevenue[0]?.total || 0,
+      monthlySales
+    };
 
     res.json({
       success: true,
-      data: users,
-      total: users.length,
-      message: 'Usuários carregados com sucesso'
+      data: stats,
+      message: 'Estatísticas carregadas com sucesso'
     });
 
   } catch (error) {
-    console.error('Erro ao buscar usuários:', error);
+    console.error('Erro ao buscar estatísticas:', error);
     res.status(500).json({
       success: false,
       error: error.message,

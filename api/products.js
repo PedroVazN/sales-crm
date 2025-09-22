@@ -57,24 +57,55 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Importar modelo User
-    const User = require('../models/User');
+    // Importar modelo Product
+    const Product = require('../models/Product');
     
-    // Buscar usuários
-    const users = await User.find({ isActive: true })
-      .select('-password')
+    // Parâmetros de paginação
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Filtros
+    const filter = {};
+    if (req.query.search) {
+      filter.$or = [
+        { name: { $regex: req.query.search, $options: 'i' } },
+        { description: { $regex: req.query.search, $options: 'i' } },
+        { sku: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+    if (req.query.category) {
+      filter.category = req.query.category;
+    }
+    if (req.query.isActive !== undefined) {
+      filter.isActive = req.query.isActive === 'true';
+    }
+
+    // Buscar produtos
+    const products = await Product.find(filter)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
+
+    // Contar total de produtos
+    const total = await Product.countDocuments(filter);
+    const pages = Math.ceil(total / limit);
 
     res.json({
       success: true,
-      data: users,
-      total: users.length,
-      message: 'Usuários carregados com sucesso'
+      data: products,
+      pagination: {
+        current: page,
+        pages: pages,
+        total: total,
+        limit: limit
+      },
+      message: 'Produtos carregados com sucesso'
     });
 
   } catch (error) {
-    console.error('Erro ao buscar usuários:', error);
+    console.error('Erro ao buscar produtos:', error);
     res.status(500).json({
       success: false,
       error: error.message,

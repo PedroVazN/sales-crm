@@ -57,24 +57,72 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Importar modelo User
-    const User = require('../models/User');
+    // Importar modelo Sale
+    const Sale = require('../models/Sale');
     
-    // Buscar usuários
-    const users = await User.find({ isActive: true })
-      .select('-password')
+    // Parâmetros de paginação
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Filtros
+    const filter = {};
+    if (req.query.search) {
+      filter.$or = [
+        { saleNumber: { $regex: req.query.search, $options: 'i' } },
+        { 'customer.name': { $regex: req.query.search, $options: 'i' } },
+        { 'seller.name': { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+    if (req.query.paymentStatus) {
+      filter.paymentStatus = req.query.paymentStatus;
+    }
+    if (req.query.dateFrom && req.query.dateTo) {
+      filter.createdAt = {
+        $gte: new Date(req.query.dateFrom),
+        $lte: new Date(req.query.dateTo)
+      };
+    }
+
+    // Buscar vendas
+    const sales = await Sale.find(filter)
+      .populate('client', 'razaoSocial nomeFantasia')
+      .populate('seller', 'name email')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
+
+    // Contar total de vendas
+    const total = await Sale.countDocuments(filter);
+    const pages = Math.ceil(total / limit);
+
+    // Calcular estatísticas
+    const totalValue = await Sale.aggregate([
+      { $match: filter },
+      { $group: { _id: null, total: { $sum: '$total' } } }
+    ]);
 
     res.json({
       success: true,
-      data: users,
-      total: users.length,
-      message: 'Usuários carregados com sucesso'
+      data: sales,
+      pagination: {
+        current: page,
+        pages: pages,
+        total: total,
+        limit: limit
+      },
+      stats: {
+        totalValue: totalValue[0]?.total || 0
+      },
+      message: 'Vendas carregadas com sucesso'
     });
 
   } catch (error) {
-    console.error('Erro ao buscar usuários:', error);
+    console.error('Erro ao buscar vendas:', error);
     res.status(500).json({
       success: false,
       error: error.message,

@@ -57,24 +57,60 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Importar modelo User
-    const User = require('../models/User');
+    // Importar modelo Proposal
+    const Proposal = require('../models/Proposal');
     
-    // Buscar usuários
-    const users = await User.find({ isActive: true })
-      .select('-password')
+    // Parâmetros de paginação
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Filtros
+    const filter = {};
+    if (req.query.search) {
+      filter.$or = [
+        { proposalNumber: { $regex: req.query.search, $options: 'i' } },
+        { 'client.name': { $regex: req.query.search, $options: 'i' } },
+        { 'seller.name': { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+    if (req.query.dateFrom && req.query.dateTo) {
+      filter.createdAt = {
+        $gte: new Date(req.query.dateFrom),
+        $lte: new Date(req.query.dateTo)
+      };
+    }
+
+    // Buscar propostas
+    const proposals = await Proposal.find(filter)
+      .populate('client', 'razaoSocial nomeFantasia')
+      .populate('seller', 'name email')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
+
+    // Contar total de propostas
+    const total = await Proposal.countDocuments(filter);
+    const pages = Math.ceil(total / limit);
 
     res.json({
       success: true,
-      data: users,
-      total: users.length,
-      message: 'Usuários carregados com sucesso'
+      data: proposals,
+      pagination: {
+        current: page,
+        pages: pages,
+        total: total,
+        limit: limit
+      },
+      message: 'Propostas carregadas com sucesso'
     });
 
   } catch (error) {
-    console.error('Erro ao buscar usuários:', error);
+    console.error('Erro ao buscar propostas:', error);
     res.status(500).json({
       success: false,
       error: error.message,

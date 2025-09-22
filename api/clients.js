@@ -57,24 +57,59 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Importar modelo User
-    const User = require('../models/User');
+    // Importar modelo Client
+    const Client = require('../models/Client');
     
-    // Buscar usuários
-    const users = await User.find({ isActive: true })
-      .select('-password')
+    // Parâmetros de paginação
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Filtros
+    const filter = {};
+    if (req.query.search) {
+      filter.$or = [
+        { razaoSocial: { $regex: req.query.search, $options: 'i' } },
+        { nomeFantasia: { $regex: req.query.search, $options: 'i' } },
+        { cnpj: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+    if (req.query.classificacao) {
+      filter.classificacao = req.query.classificacao;
+    }
+    if (req.query.uf) {
+      filter['endereco.uf'] = req.query.uf;
+    }
+    if (req.query.isActive !== undefined) {
+      filter.isActive = req.query.isActive === 'true';
+    }
+
+    // Buscar clientes
+    const clients = await Client.find(filter)
+      .populate('createdBy', 'name email')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
+
+    // Contar total de clientes
+    const total = await Client.countDocuments(filter);
+    const pages = Math.ceil(total / limit);
 
     res.json({
       success: true,
-      data: users,
-      total: users.length,
-      message: 'Usuários carregados com sucesso'
+      data: clients,
+      pagination: {
+        current: page,
+        pages: pages,
+        total: total,
+        limit: limit
+      },
+      message: 'Clientes carregados com sucesso'
     });
 
   } catch (error) {
-    console.error('Erro ao buscar usuários:', error);
+    console.error('Erro ao buscar clientes:', error);
     res.status(500).json({
       success: false,
       error: error.message,
