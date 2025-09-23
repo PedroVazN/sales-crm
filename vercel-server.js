@@ -32,10 +32,8 @@ app.options('*', (req, res) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Carregar variáveis de ambiente (apenas em desenvolvimento)
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
-}
+// Carregar variáveis de ambiente
+require('dotenv').config();
 
 // Importar configuração do banco de dados
 const { connectDB, setupModels, checkConnection } = require('./config/database');
@@ -43,16 +41,16 @@ const { connectDB, setupModels, checkConnection } = require('./config/database')
 // Conectar ao MongoDB e configurar modelos
 const initializeDatabase = async () => {
   try {
-    console.log('🔄 Inicializando banco de dados...');
+    console.log('🔄 Inicializando banco de dados na Vercel...');
     const connected = await connectDB();
     if (connected) {
       setupModels();
-      console.log('✅ Banco de dados inicializado com sucesso');
+      console.log('✅ Banco de dados inicializado com sucesso na Vercel');
     } else {
-      console.log('⚠️ Banco de dados não conectado, mas servidor continuará funcionando');
+      console.log('⚠️ Banco de dados não conectado na Vercel');
     }
   } catch (error) {
-    console.error('❌ Erro ao inicializar banco de dados:', error.message);
+    console.error('❌ Erro ao inicializar banco de dados na Vercel:', error.message);
   }
 };
 
@@ -65,7 +63,8 @@ app.get('/api', (req, res) => {
     message: 'Bem-vindo ao SellOne API',
     version: '1.0.0',
     status: 'online',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    environment: 'vercel'
   });
 });
 
@@ -107,9 +106,10 @@ app.use('/api/price-list', priceListRouter);
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    message: 'API funcionando',
+    message: 'API funcionando na Vercel',
     database: mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado',
-    readyState: mongoose.connection.readyState
+    readyState: mongoose.connection.readyState,
+    environment: 'vercel'
   });
 });
 
@@ -130,7 +130,8 @@ app.get('/api/test-db', (req, res) => {
       },
       environment: {
         nodeEnv: process.env.NODE_ENV,
-        hasMongoUri: !!process.env.MONGODB_URI
+        hasMongoUri: !!process.env.MONGODB_URI,
+        platform: 'vercel'
       }
     });
   } catch (error) {
@@ -144,7 +145,7 @@ app.get('/api/test-db', (req, res) => {
 // Rota para tentar reconectar ao banco
 app.get('/api/reconnect-db', async (req, res) => {
   try {
-    console.log('🔄 Tentando reconectar ao MongoDB...');
+    console.log('🔄 Tentando reconectar ao MongoDB na Vercel...');
     
     // Fechar conexão existente se houver
     if (mongoose.connection.readyState !== 0) {
@@ -165,14 +166,16 @@ app.get('/api/reconnect-db', async (req, res) => {
         readyState: mongoose.connection.readyState,
         name: mongoose.connection.name,
         host: mongoose.connection.host
-      }
+      },
+      platform: 'vercel'
     });
   } catch (error) {
-    console.error('❌ Erro ao reconectar:', error.message);
+    console.error('❌ Erro ao reconectar na Vercel:', error.message);
     res.status(500).json({
       success: false,
       error: error.message,
-      connected: false
+      connected: false,
+      platform: 'vercel'
     });
   }
 });
@@ -180,22 +183,11 @@ app.get('/api/reconnect-db', async (req, res) => {
 // Rota de teste para verificar se o servidor está funcionando
 app.get('/api/test', (req, res) => {
   res.json({ 
-    message: 'Backend funcionando!', 
+    message: 'Backend funcionando na Vercel!', 
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'production',
+    platform: 'vercel'
   });
 });
-
-// Para Vercel, não precisamos do app.listen
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`🚀 Servidor SellOne funcionando na porta ${PORT}`);
-    console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🌐 Frontend: http://localhost:${PORT}`);
-    console.log(`🔗 API: http://localhost:${PORT}/api`);
-    console.log(`🔐 Login: admin@sellone.com / 123456`);
-  });
-}
 
 module.exports = app;

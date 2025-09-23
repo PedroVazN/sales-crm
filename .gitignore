@@ -15,6 +15,7 @@ dist/
 .env.test.local
 .env.production.local
 
+<<<<<<< HEAD
 # IDE
 .vscode/
 .idea/
@@ -25,6 +26,8 @@ dist/
 .DS_Store
 Thumbs.db
 
+=======
+>>>>>>> a6cf308d8d2f2caf4dc5e00228555df0d476e4ed
 # Logs
 logs
 *.log
@@ -42,6 +45,7 @@ coverage/
 .nyc_output
 
 # Dependency directories
+node_modules/
 jspm_packages/
 
 # Optional npm cache directory
@@ -84,9 +88,26 @@ jspm_packages/
 # TernJS port file
 .tern-port
 
+<<<<<<< HEAD
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
 # Temporary folders
 tmp/
 temp/
+=======
+# Frontend build (não enviar para o backend)
+sales-crm/
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+>>>>>>> a6cf308d8d2f2caf4dc5e00228555df0d476e4ed

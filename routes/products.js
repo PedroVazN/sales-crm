@@ -47,6 +47,44 @@ router.post('/', [auth, authorize('admin', 'vendedor')], [
 // @access  Public
 router.get('/', async (req, res) => {
   try {
+    // Se não há conexão com banco, usar dados mockados
+    if (req.useMockData) {
+      const mockProducts = [
+        {
+          _id: 'mock1',
+          name: 'Produto Mock 1',
+          description: 'Descrição do produto mock',
+          price: 100.00,
+          category: 'Categoria A',
+          sku: 'MOCK001',
+          stock: { current: 10, min: 5 },
+          isActive: true,
+          createdAt: new Date()
+        },
+        {
+          _id: 'mock2',
+          name: 'Produto Mock 2',
+          description: 'Descrição do produto mock 2',
+          price: 200.00,
+          category: 'Categoria B',
+          sku: 'MOCK002',
+          stock: { current: 5, min: 2 },
+          isActive: true,
+          createdAt: new Date()
+        }
+      ];
+
+      return res.json({
+        success: true,
+        data: mockProducts,
+        pagination: {
+          current: 1,
+          pages: 1,
+          total: 2
+        }
+      });
+    }
+
     const { 
       page = 1, 
       limit = 10, 
