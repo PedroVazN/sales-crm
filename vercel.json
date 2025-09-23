@@ -2,23 +2,18 @@
   "version": 2,
   "builds": [
     {
-      "src": "complete-server.js",
+      "src": "api/index.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "complete-server.js"
+      "dest": "api/index.js"
     },
     {
       "src": "/(.*)",
-      "dest": "public/index.html"
+      "dest": "api/index.js"
     }
-  ],
-  "functions": {
-    "complete-server.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
