@@ -884,7 +884,7 @@ class ApiService {
 
   async updateProposalStatus(id: string, status: Proposal['status']): Promise<ApiResponse<Proposal>> {
     return this.request<Proposal>(`/proposals/${id}/status`, {
-      method: 'PATCH',
+      method: 'PUT',
       body: JSON.stringify({ status }),
     });
   }

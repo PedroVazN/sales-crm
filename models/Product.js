@@ -85,8 +85,7 @@ const productSchema = new mongoose.Schema({
 
 // Índices para melhor performance
 productSchema.index({ name: 'text', description: 'text', category: 'text' });
-productSchema.index({ sku: 1 });
-productSchema.index({ barcode: 1 });
+// sku e barcode já têm índices únicos automáticos por causa do unique: true
 productSchema.index({ category: 1 });
 productSchema.index({ isActive: 1 });
 

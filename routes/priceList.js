@@ -8,7 +8,10 @@ const { auth } = require('../middleware/auth');
 // GET /api/price-list - Listar lista de preços agrupada por distribuidor
 router.get('/', auth, async (req, res) => {
   try {
-    const { page = 1, limit = 10, distributor, product, isActive } = req.query;
+    console.log('=== INÍCIO DA ROTA PRICE-LIST ===');
+    console.log('Usuário:', req.user);
+    
+    const { page = 1, limit = 100, distributor, product, isActive } = req.query;
     const skip = (page - 1) * limit;
 
     let query = { createdBy: req.user.id };
@@ -25,40 +28,102 @@ router.get('/', auth, async (req, res) => {
       query.isActive = isActive === 'true';
     }
 
-    // Buscar todos os itens da lista de preços
     console.log('Query para buscar itens:', query);
+    
+    // BUSCAR DADOS REAIS DO BANCO DE DADOS
     const priceList = await PriceList.find(query)
-      .populate('distributor', 'apelido razaoSocial contato.nome')
-      .populate('product', 'name description price category')
-      .populate('createdBy', 'name email')
-      .sort({ 'distributor.apelido': 1, 'product.name': 1 });
+      .populate({
+        path: 'distributor',
+        model: 'DistributorNew',
+        select: 'apelido razaoSocial contato.nome contato.telefone'
+      })
+      .populate({
+        path: 'product',
+        model: 'Product',
+        select: 'name description price category'
+      })
+      .populate({
+        path: 'createdBy',
+        model: 'User',
+        select: 'name email'
+      })
+      .sort({ createdAt: -1 });
     
     console.log('Itens encontrados no banco:', priceList.length);
-    console.log('IDs dos itens encontrados:', priceList.map(item => item._id));
+    
+    if (priceList.length > 0) {
+      console.log('Primeiro item (para debug):', JSON.stringify(priceList[0], null, 2));
+      console.log('Distribuidor populado:', priceList[0].distributor);
+      console.log('Produto populado:', priceList[0].product);
+    }
+
+    // Filtrar apenas itens com distribuidor válido
+    const validItems = priceList.filter(item =>
+      item.distributor &&
+      item.distributor._id &&
+      item.product &&
+      item.product._id
+    );
+
+    console.log('Itens válidos após filtro:', validItems.length);
+
+    // Se não há itens válidos, retornar array vazio
+    if (validItems.length === 0) {
+      return res.json({
+        success: true,
+        data: [],
+        pagination: {
+          current: parseInt(page),
+          pages: 0,
+          total: 0,
+          limit: parseInt(limit)
+        },
+        message: 'Nenhum item válido encontrado'
+      });
+    }
 
     // Agrupar por distribuidor
-    const groupedData = priceList.reduce((acc, item) => {
-      const distributorId = item.distributor._id.toString();
-      
+    const groupedData = validItems.reduce((acc, item) => {
+      const distributorId = item.distributor ? item.distributor._id.toString() : 'sem-distribuidor';
+
       if (!acc[distributorId]) {
         acc[distributorId] = {
-          distributor: item.distributor,
+          _id: distributorId,
+          distributor: item.distributor || {
+            _id: 'sem-id',
+            apelido: 'Distribuidor não encontrado',
+            razaoSocial: 'Distribuidor não encontrado',
+            contato: {
+              nome: 'N/A',
+              telefone: 'N/A'
+            }
+          },
           products: []
         };
       }
-      
+
       acc[distributorId].products.push({
         _id: item._id,
-        product: item.product,
-        pricing: item.pricing,
+        product: item.product || {
+          _id: 'sem-id',
+          name: 'Produto não encontrado',
+          description: 'Produto não encontrado',
+          price: 0,
+          category: 'N/A'
+        },
+        pricing: {
+          aVista: item.pricing?.aVista || 0,
+          cartao: item.pricing?.tresXCartao || 0,
+          boleto: item.pricing?.tresXBoleto || 0
+        },
         isActive: item.isActive,
         validFrom: item.validFrom,
         validUntil: item.validUntil,
-        notes: item.notes,
+        notes: item.notes || '',
         createdAt: item.createdAt,
         updatedAt: item.updatedAt
       });
-      
+
       return acc;
     }, {});
 
@@ -67,7 +132,7 @@ router.get('/', auth, async (req, res) => {
     const total = groupedArray.length;
     const paginatedData = groupedArray.slice(skip, skip + parseInt(limit));
 
-    console.log('Dados agrupados enviados para o frontend:', JSON.stringify(paginatedData, null, 2));
+    console.log('Dados agrupados por distribuidor enviados para o frontend:', paginatedData.length, 'distribuidores');
 
     res.json({
       success: true,
@@ -77,11 +142,18 @@ router.get('/', auth, async (req, res) => {
         pages: Math.ceil(total / limit),
         total,
         limit: parseInt(limit)
-      }
+      },
+      message: `Encontradas ${validItems.length} itens em ${groupedArray.length} distribuidores`
     });
   } catch (error) {
-    console.error('Erro ao buscar lista de preços:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('=== ERRO NA ROTA PRICE-LIST ===');
+    console.error('Erro completo:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ 
+      success: false,
+      error: 'Erro interno do servidor',
+      details: error.message 
+    });
   }
 });
 
@@ -110,6 +182,10 @@ router.get('/:id', auth, async (req, res) => {
 // POST /api/price-list - Criar novo item na lista de preços
 router.post('/', auth, async (req, res) => {
   try {
+    console.log('=== POST /api/price-list ===');
+    console.log('Body recebido:', JSON.stringify(req.body, null, 2));
+    console.log('User:', req.user);
+    
     const {
       distributor,
       product,
@@ -120,17 +196,26 @@ router.post('/', auth, async (req, res) => {
     } = req.body;
 
     // Validações básicas
+    console.log('Validando campos obrigatórios...');
+    console.log('distributor:', distributor);
+    console.log('product:', product);
+    console.log('pricing:', pricing);
+    
     if (!distributor || !product || !pricing) {
+      console.log('❌ Falha na validação: campos obrigatórios ausentes');
       return res.status(400).json({ 
         error: 'Distribuidor, produto e preços são obrigatórios' 
       });
     }
 
     if (!pricing.aVista || !pricing.tresXBoleto || !pricing.tresXCartao) {
+      console.log('❌ Falha na validação: valores de preço ausentes');
       return res.status(400).json({ 
         error: 'Todos os valores de preço são obrigatórios' 
       });
     }
+    
+    console.log('✅ Validações passaram');
 
     // Verificar se já existe um item para este distribuidor e produto
     const existingItem = await PriceList.findOne({
@@ -140,11 +225,13 @@ router.post('/', auth, async (req, res) => {
     });
 
     if (existingItem) {
+      console.log('❌ Item já existe:', existingItem._id);
       return res.status(400).json({ 
         error: 'Já existe um preço cadastrado para este distribuidor e produto' 
       });
     }
 
+    console.log('✅ Criando novo item...');
     const priceItem = new PriceList({
       distributor,
       product,
@@ -291,6 +378,91 @@ router.get('/distributor/:distributorId', auth, async (req, res) => {
   } catch (error) {
     console.error('Erro ao buscar preços por distribuidor:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// POST /api/price-list/create - Criar lista de preços completa
+router.post('/create', auth, async (req, res) => {
+  try {
+    console.log('=== POST /api/price-list/create ===');
+    console.log('Body recebido:', JSON.stringify(req.body, null, 2));
+    console.log('User:', req.user);
+    
+    const { distributorId, products } = req.body;
+
+    // Validações básicas
+    if (!distributorId || !products || products.length === 0) {
+      return res.status(400).json({ 
+        error: 'Distribuidor e produtos são obrigatórios' 
+      });
+    }
+
+    // Criar um item para cada produto
+    const createdItems = [];
+    
+    for (const product of products) {
+      const { productId, pricing, isActive, validFrom, validUntil, notes } = product;
+      
+      // Validações do produto
+      if (!productId || !pricing) {
+        continue; // Pular produtos inválidos
+      }
+
+      if (pricing.aVista <= 0 || pricing.cartao <= 0 || pricing.boleto <= 0) {
+        console.log(`❌ Preços inválidos para produto ${productId}:`, pricing);
+        continue; // Pular produtos com preços inválidos
+      }
+
+      // Verificar se já existe
+      const existingItem = await PriceList.findOne({
+        distributor: distributorId,
+        product: productId,
+        createdBy: req.user.id
+      });
+
+      if (existingItem) {
+        console.log(`❌ Item já existe para produto ${productId}`);
+        continue; // Pular itens duplicados
+      }
+
+      // Criar novo item
+      const priceItem = new PriceList({
+        distributor: distributorId,
+        product: productId,
+        pricing: {
+          aVista: pricing.aVista,
+          tresXBoleto: pricing.boleto,
+          tresXCartao: pricing.cartao
+        },
+        isActive: isActive !== undefined ? isActive : true,
+        validFrom: validFrom ? new Date(validFrom) : undefined,
+        validUntil: validUntil ? new Date(validUntil) : undefined,
+        notes: notes || '',
+        createdBy: req.user.id
+      });
+
+      await priceItem.save();
+      await priceItem.populate('distributor', 'apelido razaoSocial contato.nome');
+      await priceItem.populate('product', 'name description price category');
+      await priceItem.populate('createdBy', 'name email');
+
+      createdItems.push(priceItem);
+    }
+
+    console.log(`✅ Criados ${createdItems.length} itens de ${products.length} produtos`);
+
+    res.status(201).json({ 
+      success: true,
+      message: `Lista de preços criada com ${createdItems.length} produtos`,
+      data: createdItems
+    });
+  } catch (error) {
+    console.error('Erro ao criar lista de preços:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Erro interno do servidor',
+      details: error.message
+    });
   }
 });
 

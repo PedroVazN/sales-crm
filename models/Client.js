@@ -103,7 +103,7 @@ const clientSchema = new mongoose.Schema({
 });
 
 // Índices para melhor performance
-clientSchema.index({ cnpj: 1 });
+// cnpj já tem índice único automático por causa do unique: true
 clientSchema.index({ razaoSocial: 1 });
 clientSchema.index({ 'contato.email': 1 });
 clientSchema.index({ 'endereco.uf': 1 });

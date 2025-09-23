@@ -1,17 +1,10 @@
 module.exports = {
   extends: [
     'react-app',
-    'react-app/jest'
+    'react-app/jest',
   ],
   rules: {
-    '@typescript-eslint/no-unused-vars': 'warn',
-    'jsx-a11y/anchor-is-valid': 'warn',
-    'react-hooks/exhaustive-deps': 'warn',
-    '@typescript-eslint/no-redeclare': 'warn'
+    'react/react-in-jsx-scope': 'off',
+    'no-unused-vars': 'warn',
   },
-  env: {
-    browser: true,
-    node: true,
-    es6: true
-  }
 };

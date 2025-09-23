@@ -377,11 +377,11 @@ export const Proposals: React.FC = () => {
             <Search size={20} />
             <SearchInput 
               placeholder="Pesquisar propostas..." 
-              value={searchTerm}
+              value={searchTerm || ''}
               onChange={handleSearch}
             />
           </SearchContainer>
-          <Select value={statusFilter} onChange={handleStatusFilter} style={{ marginRight: '0.5rem' }}>
+          <Select value={statusFilter || ''} onChange={handleStatusFilter} style={{ marginRight: '0.5rem' }}>
             <option value="">Todos os status</option>
             <option value="draft">Rascunho</option>
             <option value="sent">Enviada</option>
@@ -563,23 +563,23 @@ export const Proposals: React.FC = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <Input
                     placeholder="Nome do cliente"
-                    value={selectedClient.name}
+                    value={selectedClient.name || ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedClient(prev => ({ ...prev, name: e.target.value }))}
                   />
                   <Input
                     placeholder="Email"
                     type="email"
-                    value={selectedClient.email}
+                    value={selectedClient.email || ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedClient(prev => ({ ...prev, email: e.target.value }))}
                   />
                   <Input
                     placeholder="Telefone"
-                    value={selectedClient.phone}
+                    value={selectedClient.phone || ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedClient(prev => ({ ...prev, phone: e.target.value }))}
                   />
                   <Input
                     placeholder="Empresa"
-                    value={selectedClient.company}
+                    value={selectedClient.company || ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedClient(prev => ({ ...prev, company: e.target.value }))}
                   />
                 </div>
@@ -590,7 +590,7 @@ export const Proposals: React.FC = () => {
                 <FormGroup>
                   <Label>Vendedor *</Label>
                   <Select
-                    value={selectedSeller}
+                    value={selectedSeller || ''}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedSeller(e.target.value)}
                   >
                     <option value="">Selecione o vendedor</option>
@@ -604,7 +604,7 @@ export const Proposals: React.FC = () => {
                 <FormGroup>
                   <Label>Distribuidor *</Label>
                   <Select
-                    value={selectedDistributor}
+                    value={selectedDistributor || ''}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedDistributor(e.target.value)}
                   >
                     <option value="">Selecione o distribuidor</option>
@@ -625,7 +625,7 @@ export const Proposals: React.FC = () => {
                     <ProductHeader>
                       <ProductName>
                         <Select
-                          value={product.productId}
+                          value={product.productId || ''}
                           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                             const selectedProduct = products.find(p => p._id === e.target.value);
                             if (selectedProduct) {
@@ -653,7 +653,7 @@ export const Proposals: React.FC = () => {
                         <PriceInput
                           type="number"
                           min="1"
-                          value={product.quantity}
+                          value={product.quantity || 1}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProduct(index, 'quantity', parseInt(e.target.value) || 1)}
                         />
                       </PriceRow>
@@ -662,7 +662,7 @@ export const Proposals: React.FC = () => {
                         <PriceInput
                           type="number"
                           step="0.01"
-                          value={product.unitPrice}
+                          value={product.unitPrice || 0}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProduct(index, 'unitPrice', parseFloat(e.target.value) || 0)}
                         />
                       </PriceRow>
@@ -672,7 +672,7 @@ export const Proposals: React.FC = () => {
                           type="number"
                           min="0"
                           max="100"
-                          value={product.discount}
+                          value={product.discount || 0}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProduct(index, 'discount', parseFloat(e.target.value) || 0)}
                         />
                       </PriceRow>
@@ -681,7 +681,7 @@ export const Proposals: React.FC = () => {
                         <PriceInput
                           type="number"
                           step="0.01"
-                          value={product.total}
+                          value={product.total || 0}
                           readOnly
                           style={{ backgroundColor: '#f3f4f6' }}
                         />
@@ -715,7 +715,7 @@ export const Proposals: React.FC = () => {
                   <Label>Condição de Pagamento</Label>
                   <Input
                     placeholder="Ex: À vista, 30 dias, 3x sem juros"
-                    value={paymentCondition}
+                    value={paymentCondition || ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentCondition(e.target.value)}
                   />
                 </FormGroup>
@@ -723,7 +723,7 @@ export const Proposals: React.FC = () => {
                   <Label>Válido Até</Label>
                   <Input
                     type="date"
-                    value={validUntil}
+                    value={validUntil || ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValidUntil(e.target.value)}
                   />
                 </FormGroup>
@@ -733,7 +733,7 @@ export const Proposals: React.FC = () => {
                 <Label>Observações</Label>
                 <Input
                   placeholder="Observações adicionais..."
-                  value={observations}
+                  value={observations || ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setObservations(e.target.value)}
                 />
               </FormGroup>

@@ -100,7 +100,7 @@ const saleSchema = new mongoose.Schema({
 });
 
 // Índices para melhor performance
-saleSchema.index({ saleNumber: 1 });
+// saleNumber já tem índice único automático por causa do unique: true
 saleSchema.index({ customer: 1 });
 saleSchema.index({ seller: 1 });
 saleSchema.index({ createdAt: -1 });

@@ -10,7 +10,7 @@ router.get('/', auth, async (req, res) => {
     const { page = 1, limit = 10, status, search } = req.query;
     const skip = (page - 1) * limit;
 
-    let query = { 'createdBy._id': req.user.id };
+    let query = { createdBy: new mongoose.Types.ObjectId(req.user.id) };
     
     if (status) {
       query.status = status;
@@ -130,7 +130,7 @@ router.put('/:id', auth, async (req, res) => {
 
     const proposal = await Proposal.findOne({
       _id: req.params.id,
-      createdBy: req.user.id
+      createdBy: new mongoose.Types.ObjectId(req.user.id)
     });
 
     if (!proposal) {
@@ -155,13 +155,63 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-// DELETE /api/proposals/:id - Deletar proposta
-router.delete('/:id', auth, async (req, res) => {
+// PUT /api/proposals/:id/status - Atualizar status da proposta
+router.put('/:id/status', async (req, res) => {
   try {
-    const proposal = await Proposal.findOneAndDelete({
-      _id: req.params.id,
-      createdBy: req.user.id
+    console.log('=== PUT /api/proposals/:id/status ===');
+    console.log('ID da proposta:', req.params.id);
+    console.log('Status solicitado:', req.body.status);
+
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ error: 'Status é obrigatório' });
+    }
+
+    // Primeiro, buscar a proposta sem filtro de createdBy
+    const proposal = await Proposal.findById(req.params.id);
+    console.log('Proposta encontrada:', proposal ? 'Sim' : 'Não');
+    if (proposal) {
+      console.log('createdBy da proposta:', proposal.createdBy);
+      console.log('Tipo do createdBy:', typeof proposal.createdBy);
+    }
+
+    if (!proposal) {
+      return res.status(404).json({ error: 'Proposta não encontrada' });
+    }
+
+    // Usar updateOne para evitar validação de campos obrigatórios
+    await Proposal.updateOne(
+      { _id: req.params.id },
+      { status: status }
+    );
+    
+    // Buscar a proposta atualizada
+    const updatedProposal = await Proposal.findById(req.params.id)
+      .populate('createdBy', 'name email');
+
+    res.json({ 
+      success: true,
+      data: updatedProposal,
+      message: 'Status atualizado com sucesso'
     });
+  } catch (error) {
+    console.error('Erro ao atualizar status da proposta:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// DELETE /api/proposals/:id - Deletar proposta
+router.delete('/:id', async (req, res) => {
+  try {
+    console.log('=== DELETE /api/proposals/:id ===');
+    console.log('ID da proposta:', req.params.id);
+
+    const proposal = await Proposal.findOneAndDelete({
+      _id: req.params.id
+    });
+
+    console.log('Proposta encontrada para deletar:', proposal ? 'Sim' : 'Não');
 
     if (!proposal) {
       return res.status(404).json({ error: 'Proposta não encontrada' });
