@@ -21,7 +21,7 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "sales-crm/src"
+    "**/*.js"
   ]
 }
 
