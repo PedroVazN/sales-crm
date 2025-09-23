@@ -32,8 +32,10 @@ app.options('*', (req, res) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Carregar variáveis de ambiente
-require('dotenv').config();
+// Carregar variáveis de ambiente (apenas em desenvolvimento)
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
 // Importar configuração do banco de dados
 const { connectDB, setupModels, checkConnection } = require('./config/database');
